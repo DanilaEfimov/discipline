@@ -11,7 +11,7 @@ class BoundedHash {
     chunks_t chunks = 0;
 
 public:
-    cache_line_size_t calculate(T&& obj) {
+    cache_line_size_t calculate(T&& obj) noexcept {
         return cache_line_size * this->chunks + 
             std::hash<T>(obj) & (cache_line_size - 1);
     }
