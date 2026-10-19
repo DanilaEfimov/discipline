@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.20)
 
 project(hash_map VERSION 0.1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)		# default variable value for every target
+include(GNUInstallDirs)
+
+set(CMAKE_CXX_STANDARD 20)		    # default variable value for every target
 set(CMAKE_CXX_STANDARD_REQUIRED ON)	# no compiler version rollbacks
 set(CMAKE_CXX_EXTENSIONS OFF)		# only c++ standard features, no gnu extensions
 
@@ -10,6 +12,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)		# only c++ standard features, no gnu extensions
 # compile_commands.json needed by clangd, IDE and other analizers
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_subdirectory(src)	# entry sbudir and execute nested CMakeList.txt
+add_subdirectory(src)	# entry subdir and execute nested CMakeLists.txt
+
+enable_testing()
 add_subdirectory(tests)
 
