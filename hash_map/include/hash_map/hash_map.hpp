@@ -42,10 +42,13 @@ class HashMap {
   std::vector<CacheLine, CacheLineAllocator<T>> nodes;
   Hash hasher;
 
-  void pop_bucket(BucketCounter::bucket_cnt_t idx) {}
+  void pop_bucket(BucketCounter::bucket_cnt_t idx) {
+    // ! this function sucks
+  }
 
   bool bucket_contains(const K &key,
                        BucketCounter::bucket_cnt_t bucket) const noexcept {
+    // ! this function sucks
     size_t items = this->bucket_counters.at(bucket).count;
     const CacheLine &line = this->nodes.at(bucket);
     for (cache_line_size_t i = 0; i < items; ++i) {
@@ -65,20 +68,14 @@ public:
 
   void insert(const K &key, const T &value) {
     // ! this function sucks
-    cache_line_size_t bucket = this->hasher.calculate(key);
-    int chunks_count = this->hasher.chunks_count();
-
-    if (!this->contains(key))
-      this->bucket_counters.emplace_back(BucketCounter(bucket));
-
-    // TODO: check the bucket capacity
-    // TODO: insert
   }
 
-  void erase(const K &key) {}
+  void erase(const K &key) {
+    // ! this function sucks
+  }
 
   T &operator[](const K &key) noexcept {
-    // TODO: searching
+    // ! this function sucks
   }
 
   const T &at(const K &key) const {
@@ -91,7 +88,7 @@ public:
   bool contains(const K &key) const noexcept {
     cache_line_size_t offset = this->hasher.calculate_offset(key);
 
-    for(size_t i = 0; i < this->nodes.size() / cache_line_size; ++i) {
+    for(size_t i = 0; i < this->bucket_counters.size() / cache_line_size; ++i) {
       if(this->bucket_contains(key, i*cache_line_size + offset))
         return true;
     }
@@ -116,8 +113,8 @@ public:
   }
 
   size_t shrint_to_fit() {
-    // TODO: free not used buckets
-    //  @returns: new count of buckets
+    // ! this function sucks
+    // TODO: remove empty buckets
     return this->bucket_counters.size();
   }
 };
