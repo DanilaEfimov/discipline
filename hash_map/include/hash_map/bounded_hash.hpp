@@ -15,6 +15,10 @@ public:
            (cache_line_size - 1);
   }
 
+  cache_line_size_t calculate_offset(T &&obj) noexcept {
+    return std::hash<T>(obj) & (cache_line_size - 1);
+  }
+
   void push_chunk() noexcept { this->chunks++; }
 
   void pop_chunk() noexcept { this->chunks--; }

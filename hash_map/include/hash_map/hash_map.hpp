@@ -4,6 +4,7 @@
 #include "cache_line.hpp"
 #include "cache_line_allocator.hpp"
 #include "config.hpp"
+#include <algorithm>
 #include <functional>
 #include <stdint.h>
 #include <vector>
@@ -26,36 +27,55 @@ template <class K, class T> class Node {
 };
 
 struct BucketCounter {
-  uint16_t bucket;
+  using bucket_cnt_t = uint16_t;
+  bucket_cnt_t bucket;
   cache_line_size_t count = 0;
+
+  BucketCounter(bucket_cnt_t bucket) : bucket() {};
 };
 
 template <class K, class T, class Hash = BoundedHash<K>,
           class KeyEqual = std::equal_to<K>,
-          class Allocator = CacheLineAllocator>
+          class Allocator = CacheLineAllocator<T>>
 class HashMap {
-  // TODO: SoA cache friendly hash map
-
-  std::vector<BucketCounter> buckets;
-  std::vector<CacheLine, CacheLineAllocator> nodes;
+  std::vector<BucketCounter> bucket_counters;
+  std::vector<CacheLine, CacheLineAllocator<T>> nodes;
   Hash hasher;
 
-  // TODO: easy allocation api
+  void pop_bucket(BucketCounter::bucket_cnt_t idx) {}
+
+  bool bucket_contains(const K &key,
+                       BucketCounter::bucket_cnt_t bucket) const noexcept {
+    size_t items = this->bucket_counters.at(bucket).count;
+    const CacheLine &line = this->nodes.at(bucket);
+    for (cache_line_size_t i = 0; i < items; ++i) {
+      const Node<K, T> *node =
+          reinterpret_cast<Node<K, T> *>(&line + i * sizeof(Node<K, T>));
+      if (node->value.first == key)
+        return true;
+    }
+    return false;
+  }
 
 public:
-  HashMap() : buckets(), nodes(), hasher() {};
+  HashMap() : bucket_counters(), nodes(), hasher() {
+    this->bucket_counters.reserve(cache_line_size);
+  };
   ~HashMap() = default;
 
   void insert(const K &key, const T &value) {
-    // TODO: insert a new Node<K, T> into a cache line
+    // ! this function sucks
+    cache_line_size_t bucket = this->hasher.calculate(key);
+    int chunks_count = this->hasher.chunks_count();
+
+    if (!this->contains(key))
+      this->bucket_counters.emplace_back(BucketCounter(bucket));
+
+    // TODO: check the bucket capacity
+    // TODO: insert
   }
 
   void erase(const K &key) {}
-
-  const T &operator[](const K &key) const noexcept {
-    // TODO: searching
-    return {};
-  }
 
   T &operator[](const K &key) noexcept {
     // TODO: searching
@@ -63,33 +83,42 @@ public:
 
   const T &at(const K &key) const {
     if (!this->contains(key))
-      throw std::out_of_range("");
+      throw std::out_of_range("hash_map::HashMap<...>: key is out of range");
 
     return (*this)[key];
   }
 
   bool contains(const K &key) const noexcept {
-    // TODO: bucket bypassing
+    cache_line_size_t offset = this->hasher.calculate_offset(key);
+
+    for(size_t i = 0; i < this->nodes.size() / cache_line_size; ++i) {
+      if(this->bucket_contains(key, i*cache_line_size + offset))
+        return true;
+    }
+
     return false;
   }
 
-  bool empty() const noexcept { return this->buckets.empty(); }
+  bool empty() const noexcept { return this->bucket_counters.empty(); }
 
   size_t size() const noexcept {
-    // TODO: count elements per bucket
-    return 0;
+    size_t res = 0;
+    for (const auto &counter : this->bucket_counters)
+      res += counter.count;
+    return res;
   }
 
   const Hash &get_hasher() const noexcept { return this->hasher; }
 
   void clear() {
-    // TODO: cleaning
+    this->bucket_counters.clear();
+    this->nodes.clear();
   }
 
   size_t shrint_to_fit() {
     // TODO: free not used buckets
     //  @returns: new count of buckets
-    return this->buckets.size();
+    return this->bucket_counters.size();
   }
 };
 

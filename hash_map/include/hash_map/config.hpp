@@ -27,4 +27,3 @@ template <> struct cache_line_size_trait<128> {
 using cache_line_size_t = cache_line_size_trait<cache_line_size>::v;
 
 } // namespace hash_map
-
