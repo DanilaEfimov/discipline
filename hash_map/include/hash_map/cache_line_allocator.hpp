@@ -4,9 +4,6 @@
 
 namespace hash_map {
 
-    class CacheLineAllocator {
+class CacheLineAllocator {};
 
-    };
-
-}
-
+} // namespace hash_map
