@@ -99,7 +99,7 @@ class HashMap {
   }
 
   void erase_in_bucket(const K& key, size_t idx) {
-    const auto& descriptor = this->bucket_counters.at(idx);
+    auto& descriptor = this->bucket_counters.at(idx);
     CacheLine& bucket = this->nodes.at(idx);
 
     if(descriptor.empty())
