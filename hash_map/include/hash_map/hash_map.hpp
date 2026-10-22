@@ -87,11 +87,10 @@ class HashMap {
     const auto& descriptor = this->bucket_counters.at(idx);
     const auto& bucket = this->nodes.at(descriptor.bucket);
     
-    constexpr size_t node_size = sizeof(node_t); 
     const node_t* base = bucket.data();
 
     for(size_t i = 0; i < descriptor.count; ++i) {
-      const node_t* current = base + node_size*i;
+      const node_t* current = base + i;
       if(current->value.first == key)
         return true;
     }
