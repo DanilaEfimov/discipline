@@ -1,27 +1,27 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <new>
 
 namespace hash_map {
 
-#if defined(__cpp_lib_hardware_interference_size)
-inline constexpr std::size_t cache_line_size =
-    std::hardware_destructive_interference_size;
-#else
-inline constexpr std::size_t cache_line_size = 64; // default
+#ifndef HASH_MAP_CACHE_LINE_SIZE
+#define HASH_MAP_CACHE_LINE_SIZE 64
 #endif
 
+inline constexpr std::size_t cache_line_size = HASH_MAP_CACHE_LINE_SIZE;
+
 template <std::size_t L> struct cache_line_size_trait {
-  using v = short;
+  using v = std::uint16_t;
 };
 
 template <> struct cache_line_size_trait<64> {
-  using v = char;
+  using v = std::uint8_t;
 };
 
 template <> struct cache_line_size_trait<128> {
-  using v = char;
+  using v = std::uint8_t;
 };
 
 using cache_line_size_t = cache_line_size_trait<cache_line_size>::v;

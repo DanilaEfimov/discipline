@@ -6,10 +6,10 @@
 
 namespace hash_map {
 
-struct CacheLine {
+struct alignas(cache_line_size) CacheLine {
   char bytes[cache_line_size];
 
-  template <class T> void write(T &obj, cache_line_size_t dest) {
+  template <class T> void write(const T &obj, cache_line_size_t dest) {
     static_assert(std::is_trivially_copyable_v<T>,
                   "CacheLine: T has to be trivially copyable");
     static_assert(sizeof(T) <= cache_line_size,

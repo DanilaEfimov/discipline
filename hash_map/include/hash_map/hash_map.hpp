@@ -7,26 +7,29 @@
 
 #include <algorithm>
 #include <functional>
-#include <stdint.h>
-#include <vector>
 #include <optional>
 #include <span>
+#include <stdint.h>
+#include <vector>
 
 namespace hash_map {
 
-template <class K, class T> class Node {
+template <class K, class T> struct Node {
 
-  using value_t = std::pair<K, T>;
+  using paired = std::pair<K, T>;
 
   static constexpr size_t pad =
-      (cache_line_size - sizeof(value_t) % cache_line_size) % cache_line_size;
+      (cache_line_size - sizeof(paired) % cache_line_size) % cache_line_size;
 
-  value_t value;
+  K key;
+  T value;
   char padding[pad];
 
   static_assert(
-      (sizeof(value_t) + pad) % cache_line_size == 0,
+      (sizeof(paired) + pad) % cache_line_size == 0,
       "hash_map::Node<K,T>: data node size is not aligned by cache line size");
+
+  Node(const K &key, const T &val) : key(key), value(val) {}
 };
 
 struct BucketCounter {
@@ -34,31 +37,29 @@ struct BucketCounter {
   bucket_cnt_t bucket;
   cache_line_size_t count = 0;
 
+  BucketCounter() = default;
   BucketCounter(bucket_cnt_t bucket) : bucket(bucket) {};
   BucketCounter(bucket_cnt_t bucket, cache_line_size_t count)
-    : bucket(bucket), count(count) {};
+      : bucket(bucket), count(count) {};
 
-  bool is_full() const noexcept {
-    return this->count == cache_line_size;
-  }
+  template<class K, class T>
+  bool is_full() const noexcept { return this->count == cache_line_size / sizeof(Node<K, T>); }
 
-  bool empty() const noexcept {
-    return !(this->count);
-  }
+  bool empty() const noexcept { return !(this->count); }
 };
 
 template <class K, class T, class Hash = BoundedHash<K>,
           class KeyEqual = std::equal_to<K>,
-          class Allocator = CacheLineAllocator<T>>
+          class Allocator = CacheLineAllocator<CacheLine>>
 class HashMap {
   using node_t = Node<K, T>;
 
   std::vector<BucketCounter> bucket_counters;
-  std::vector<CacheLine, CacheLineAllocator<T>> nodes;
+  std::vector<CacheLine, Allocator> nodes;
   Hash hasher;
 
   void pop_bucket() {
-    if(this->empty()) {
+    if (this->empty()) {
       this->nodes.clear();
       return;
     }
@@ -84,99 +85,124 @@ class HashMap {
 
   bool bucket_contains(const K &key,
                        BucketCounter::bucket_cnt_t idx) const noexcept {
-    const auto& descriptor = this->bucket_counters.at(idx);
-    const auto& bucket = this->nodes.at(descriptor.bucket);
-    
-    const node_t* base = bucket.data();
+    const auto &descriptor = this->bucket_counters.at(idx);
+    const auto &bucket = this->nodes.at(idx);
 
-    for(size_t i = 0; i < descriptor.count; ++i) {
-      const node_t* current = base + i;
-      if(current->value.first == key)
+    const node_t *base = reinterpret_cast<const node_t *>(bucket.bytes);
+
+    for (size_t i = 0; i < descriptor.count; ++i) {
+      const node_t *current = base + i;
+      if (current->key == key)
         return true;
     }
 
     return false;
   }
 
-  void erase_in_bucket(const K& key, size_t idx) {
-    auto& descriptor = this->bucket_counters.at(idx);
-    CacheLine& bucket = this->nodes.at(idx);
+  void erase_in_bucket(const K &key, size_t idx) {
+    auto &descriptor = this->bucket_counters.at(idx);
+    CacheLine &bucket = this->nodes.at(idx);
 
-    if(descriptor.empty())
+    if (descriptor.empty())
       return;
 
-    auto* begin = reinterpret_cast<node_t*>(bucket.bytes);
-    auto* end = begin + cache_line_size / sizeof(node_t);
+    auto *begin = reinterpret_cast<node_t *>(bucket.bytes);
+    auto *end = begin + cache_line_size / sizeof(node_t);
 
-    auto* new_end = std::remove_if(begin, end, 
-      [key](const node_t& node){ return key == node.value.first; });
+    auto *new_end = std::remove_if(
+        begin, begin + descriptor.count, [key](const node_t &node) { return key == node.key; });
 
     descriptor.count = new_end - begin;
   }
 
+  const T &access_helper(const K &key) const {
+    size_t base = this->hasher.calculate_offset(key);
+    size_t hops = this->bucket_counters.size() / cache_line_size;
+    for (size_t i = 0; i < hops; i++) {
+      size_t idx = base + i * cache_line_size;
+
+      const auto &descriptor = this->bucket_counters.at(idx);
+      const CacheLine &bucket = this->nodes.at(idx);
+      for (size_t j = 0; j < descriptor.count; j++) {
+        const node_t *node =
+            reinterpret_cast<const node_t *>(bucket.bytes + j * sizeof(node_t));
+        if (node->key == key)
+          return node->value;
+      }
+    }
+
+    // ! this branch has to be unreachable
+    throw std::runtime_error("HashMap<...>::access_helper: non-resolved call");
+  }
+
+  T &access_helper(const K &key) {
+    size_t base = this->hasher.calculate_offset(key);
+    size_t hops = this->bucket_counters.size() / cache_line_size;
+    for (size_t i = 0; i < hops; i++) {
+      size_t idx = base + i * cache_line_size;
+
+      const auto &descriptor = this->bucket_counters.at(idx);
+      CacheLine &bucket = this->nodes.at(idx);
+      for (size_t j = 0; j < descriptor.count; j++) {
+        node_t *node =
+            reinterpret_cast<node_t *>(bucket.bytes + j * sizeof(node_t));
+        if (node->key == key)
+          return node->value;
+      }
+    }
+
+    // ! this branch has to be unreachable
+    throw std::runtime_error("HashMap<...>::access_helper: non-resolved call");
+  }
+
 public:
-  HashMap() : bucket_counters(), nodes(), hasher() {
-    this->bucket_counters.reserve(cache_line_size);
-  };
+  HashMap() : bucket_counters(cache_line_size), nodes(cache_line_size), hasher() {};
   ~HashMap() = default;
 
   void insert(const K &key, const T &value) {
     size_t idx = this->hasher.calculate(key);
 
-    auto& descriptor = this->bucket_counters.at(idx);
-    if(descriptor.is_full())
+    if (this->bucket_counters.at(idx).is_full<K, T>()) {
       this->push_bucket();
+      idx = this->hasher.calculate(key);
+    }
 
     idx = this->hasher.calculate(key);
-    CacheLine& bucket = this->nodes.at(idx);
-
-    Node<K, T> node = Node<K, T>(key, value);
-    bucket.write(node, descriptor.count++);
+    auto &descriptor = this->bucket_counters.at(idx);
+    this->nodes.at(idx).write(node_t(key, value), sizeof(node_t) * descriptor.count);
+    ++descriptor.count;
   }
 
   void erase(const K &key) {
     size_t base = this->hasher.calculate_offset(key);
     size_t hops = this->bucket_counters.size() / cache_line_size;
-    for(size_t i = 0; i < hops; i++) {
-      this->erase_in_bucket(key, base + i*cache_line_size);
+    for (size_t i = 0; i < hops; i++) {
+      this->erase_in_bucket(key, base + i * cache_line_size);
     }
   }
 
   T &operator[](const K &key) noexcept {
-    if(!this->contains(key)) {
+    if (!this->contains(key)) {
       this->push_bucket();
-      return T();
+      this->insert(key, {});
     }
 
-    size_t base = this->hasher.calculate_offset(key);
-    size_t hops = this->bucket_counters.size() / cache_line_size;
-    for(size_t i = 0; i < hops; i++) {
-      size_t idx = base + i*cache_line_size;
-
-      const auto& descriptor = this->bucket_counters.at(idx);
-      const CacheLine& bucket = this->nodes.at(idx);
-      for(size_t j = 0; j < descriptor.count; j++) {
-        const node_t* node = reinterpret_cast<node_t*>(bucket.bytes + j*sizeof(node_t));
-        if(node->value.first == key)
-          return node->value.second;
-      }
-    }
-    
-    return T();
+    return this->access_helper(key);
   }
 
   const T &at(const K &key) const {
     if (!this->contains(key))
       throw std::out_of_range("hash_map::HashMap<...>: key is out of range");
 
-    return (*this)[key];
+    return this->access_helper(key);
   }
 
   bool contains(const K &key) const noexcept {
     cache_line_size_t offset = this->hasher.calculate_offset(key);
 
-    for(size_t i = 0; i < this->bucket_counters.size() / cache_line_size; ++i) {
-      if(this->bucket_contains(key, i*cache_line_size + offset))
+    for (size_t i = 0; i < this->bucket_counters.size() / cache_line_size;
+         ++i) {
+      if (this->bucket_contains(key, i * cache_line_size + offset))
         return true;
     }
 
