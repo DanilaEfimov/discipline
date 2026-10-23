@@ -7,8 +7,8 @@
 // Not scientifically rigorous :)
 //
 // Idea: HashMap stores nodes in a flat array of cache lines, and the key only
-// selects a "column" (hash & 63). A lookup walks that column through all chunks.
-// So:
+// selects a "column" (hash & 63). A lookup walks that column through all
+// chunks. So:
 //   + while the table is small (1-2 chunks), everything stays in cache, there
 //     is no per-node allocation and no pointer chasing -> should be fast;
 //   - once there are many chunks, a lookup becomes O(N / 512) memory hops with
@@ -44,7 +44,8 @@ struct Result {
   std::uint64_t checksum;
 };
 
-// ---- helpers -----------------------------------------------------------------
+// ---- helpers
+// -----------------------------------------------------------------
 
 // Prevents the compiler from discarding computations whose result is unused.
 inline void keep(std::uint64_t v) { asm volatile("" : : "r"(v) : "memory"); }
@@ -62,18 +63,20 @@ template <class M> inline int get(const M &m, int k) {
   return m.find(k)->second;
 }
 
-// ---- parameters --------------------------------------------------------------
+// ---- parameters
+// --------------------------------------------------------------
 
-constexpr int SMALL_N = 256;          // fits into a couple of lines per column
-constexpr int HOT_REPS = 2'000'000;   // lookups on the small map
-constexpr int BUILD_N = 128;          // map size for "build from scratch"
-constexpr int BUILD_REPS = 20'000;    // how many times we rebuild it
-constexpr int LARGE_N = 50'000;       // the "large" map
-constexpr int LARGE_MISS = 20'000;    // misses on the large map
-constexpr int STRIDE_N = 10'000;      // keys that are multiples of 64
+constexpr int SMALL_N = 256;        // fits into a couple of lines per column
+constexpr int HOT_REPS = 2'000'000; // lookups on the small map
+constexpr int BUILD_N = 128;        // map size for "build from scratch"
+constexpr int BUILD_REPS = 20'000;  // how many times we rebuild it
+constexpr int LARGE_N = 50'000;     // the "large" map
+constexpr int LARGE_MISS = 20'000;  // misses on the large map
+constexpr int STRIDE_N = 10'000;    // keys that are multiples of 64
 constexpr int STRIDE_QUERIES = 2'000;
 
-// ---- favorable scenarios -----------------------------------------------------
+// ---- favorable scenarios
+// -----------------------------------------------------
 
 // 1. Small map, many successful lookups (everything in L1, no allocations).
 template <class Map> Result s_small_hit() {
@@ -121,7 +124,8 @@ template <class Map> Result s_build_small() {
   return {ms, sum};
 }
 
-// ---- unfavorable scenarios ---------------------------------------------------
+// ---- unfavorable scenarios
+// ---------------------------------------------------
 
 // 4. Inserting a large number of elements.
 template <class Map> Result s_large_insert() {
@@ -188,7 +192,8 @@ template <class Map> Result s_stride64() {
   return {ms, sum};
 }
 
-// ---- output ------------------------------------------------------------------
+// ---- output
+// ------------------------------------------------------------------
 
 using Fn = Result (*)();
 
@@ -212,7 +217,7 @@ void compare(const char *name, Fn mine, Fn umap, Fn umulti, Fn multi) {
 }
 
 #define RUN(label, scenario)                                                   \
-  compare(label, scenario<MyMap>, scenario<UMap>, scenario<UMultiMap>,        \
+  compare(label, scenario<MyMap>, scenario<UMap>, scenario<UMultiMap>,         \
           scenario<MultiMap>)
 
 int main() {

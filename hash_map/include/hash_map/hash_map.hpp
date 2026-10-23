@@ -26,10 +26,11 @@ struct BucketCounter {
   cache_line_size_t count = 0;
 
   BucketCounter() = default;
-  BucketCounter(cache_line_size_t count)
-      : count(count) {};
+  BucketCounter(cache_line_size_t count) : count(count) {};
 
-  bool is_full(size_t capacity) const noexcept { return this->count >= capacity; }
+  bool is_full(size_t capacity) const noexcept {
+    return this->count >= capacity;
+  }
 
   bool empty() const noexcept { return !(this->count); }
 };
@@ -143,9 +144,11 @@ class HashMap {
 
 public:
   static constexpr size_t node_capacity = cache_line_size / sizeof(node_t);
-  static_assert(node_capacity >= 1, "HashMap<...>: node is larger than cahce line");
+  static_assert(node_capacity >= 1,
+                "HashMap<...>: node is larger than cahce line");
 
-  HashMap() : bucket_counters(cache_line_size), nodes(cache_line_size), hasher() {};
+  HashMap()
+      : bucket_counters(cache_line_size), nodes(cache_line_size), hasher() {};
   ~HashMap() = default;
 
   void insert(const K &key, const T &value) {
@@ -158,7 +161,8 @@ public:
 
     idx = this->hasher.calculate(key);
     auto &descriptor = this->bucket_counters.at(idx);
-    this->nodes.at(idx).write(node_t(key, value), sizeof(node_t) * descriptor.count);
+    this->nodes.at(idx).write(node_t(key, value),
+                              sizeof(node_t) * descriptor.count);
     ++descriptor.count;
   }
 

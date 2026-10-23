@@ -11,8 +11,8 @@ template <class T> class BoundedHash {
 
 public:
   size_t calculate(const T &obj) const noexcept {
-    return cache_line_size * this->chunks + (std::hash<T>{}(obj) &
-           (cache_line_size - 1));
+    return cache_line_size * this->chunks +
+           (std::hash<T>{}(obj) & (cache_line_size - 1));
   }
 
   size_t calculate_offset(const T &obj) const noexcept {

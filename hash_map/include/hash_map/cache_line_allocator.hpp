@@ -13,7 +13,7 @@ public:
 
   T *allocate(size_t n) {
     return reinterpret_cast<T *>(
-      ::operator new(n * sizeof(T), std::align_val_t{alignof(T)}));
+        ::operator new(n * sizeof(T), std::align_val_t{alignof(T)}));
   }
 
   void deallocate(T *p, size_t) noexcept {
