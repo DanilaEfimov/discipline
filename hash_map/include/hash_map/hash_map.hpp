@@ -15,35 +15,21 @@
 namespace hash_map {
 
 template <class K, class T> struct Node {
-
-  using paired = std::pair<K, T>;
-
-  static constexpr size_t pad =
-      (cache_line_size - sizeof(paired) % cache_line_size) % cache_line_size;
-
   K key;
   T value;
-  char padding[pad];
-
-  static_assert(
-      (sizeof(paired) + pad) % cache_line_size == 0,
-      "hash_map::Node<K,T>: data node size is not aligned by cache line size");
 
   Node(const K &key, const T &val) : key(key), value(val) {}
 };
 
 struct BucketCounter {
-  using bucket_cnt_t = uint16_t;
-  bucket_cnt_t bucket;
+  using bucket_cnt_t = size_t;
   cache_line_size_t count = 0;
 
   BucketCounter() = default;
-  BucketCounter(bucket_cnt_t bucket) : bucket(bucket) {};
-  BucketCounter(bucket_cnt_t bucket, cache_line_size_t count)
-      : bucket(bucket), count(count) {};
+  BucketCounter(cache_line_size_t count)
+      : count(count) {};
 
-  template<class K, class T>
-  bool is_full() const noexcept { return this->count == cache_line_size / sizeof(Node<K, T>); }
+  bool is_full(size_t capacity) const noexcept { return this->count >= capacity; }
 
   bool empty() const noexcept { return !(this->count); }
 };
@@ -107,10 +93,10 @@ class HashMap {
       return;
 
     auto *begin = reinterpret_cast<node_t *>(bucket.bytes);
-    auto *end = begin + cache_line_size / sizeof(node_t);
+    auto *end = begin + descriptor.count;
 
     auto *new_end = std::remove_if(
-        begin, begin + descriptor.count, [key](const node_t &node) { return key == node.key; });
+        begin, end, [key](const node_t &node) { return key == node.key; });
 
     descriptor.count = new_end - begin;
   }
@@ -156,13 +142,16 @@ class HashMap {
   }
 
 public:
+  static constexpr size_t node_capacity = cache_line_size / sizeof(node_t);
+  static_assert(node_capacity >= 1, "HashMap<...>: node is larger than cahce line");
+
   HashMap() : bucket_counters(cache_line_size), nodes(cache_line_size), hasher() {};
   ~HashMap() = default;
 
   void insert(const K &key, const T &value) {
     size_t idx = this->hasher.calculate(key);
 
-    if (this->bucket_counters.at(idx).is_full<K, T>()) {
+    if (this->bucket_counters.at(idx).is_full(node_capacity)) {
       this->push_bucket();
       idx = this->hasher.calculate(key);
     }
@@ -181,19 +170,16 @@ public:
     }
   }
 
-  T &operator[](const K &key) noexcept {
+  T &operator[](const K &key) {
     if (!this->contains(key)) {
-      this->push_bucket();
       this->insert(key, {});
     }
-
     return this->access_helper(key);
   }
 
   const T &at(const K &key) const {
     if (!this->contains(key))
       throw std::out_of_range("hash_map::HashMap<...>: key is out of range");
-
     return this->access_helper(key);
   }
 
@@ -209,7 +195,7 @@ public:
     return false;
   }
 
-  bool empty() const noexcept { return this->bucket_counters.empty(); }
+  bool empty() const noexcept { return this->size() == 0; }
 
   size_t size() const noexcept {
     size_t res = 0;
@@ -221,8 +207,9 @@ public:
   const Hash &get_hasher() const noexcept { return this->hasher; }
 
   void clear() {
-    this->bucket_counters.clear();
-    this->nodes.clear();
+    this->bucket_counters.assign(cache_line_size, BucketCounter{});
+    this->nodes.assign(cache_line_size, CacheLine{});
+    this->hasher = Hash{};
   }
 };
 
