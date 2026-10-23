@@ -16,6 +16,7 @@ template <class K, class T, class Hash = BoundedHash<K>,
 class HashMap;  // namespace hash_map
 ```
 I was referencing the real `std::unordered_map` implementation (but in the wrong way)... Don't pay attention to `hash_map::CacheLineAllocator`, I just tried to make a custom allocator. And ignore `hash_map::BoundedHash` too: it's a special hasher that follows the contract _"just hash objects into a bounded segment with a uniform distribution"_. You can try to make your own hasher, btw. But `hash_map::CacheLineAllocator` is the most ordinary thing here: useless, just for fun.
+
 2. Class members:
 ```C++
 {
