@@ -19,7 +19,9 @@ enum OpCode : uint8_t {
     WriteVar     = 0x0C,
     Print        = 0x0D,
     Read         = 0x0E,
-    End          = 0x0F,
+    JumpLiteral  = 0x0F,
+    JumpVar      = 0x10,
+    End          = 0x11,
 };
 
 }

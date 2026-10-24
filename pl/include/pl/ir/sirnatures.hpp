@@ -30,6 +30,8 @@ inline constexpr OpSignature op_signature(OpCode op) {
         case OpCode::WriteVar:     return { 2, { VC::Variable,  VC::Variable } };
         case OpCode::Print:        return { 1, { VC::Literal  } };
         case OpCode::Read:         return { 1, { VC::Literal  } };
+        case OpCode::JumpLiteral:  return { 1, { VC::Literal } };
+        case OpCode::JumpVar:      return { 1, { VC::Variable } };
         case OpCode::End:          return { 0, {} };
     }
     return { 0, {} };
