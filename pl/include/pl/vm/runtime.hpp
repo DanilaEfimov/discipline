@@ -36,6 +36,10 @@ public:
         this->shift_ip(session_idx, -offset);
     }
 
+    int run() {
+        return 0;
+    };
+
 };
 
 } // namespace pl
