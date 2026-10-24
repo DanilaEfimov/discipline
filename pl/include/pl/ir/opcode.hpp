@@ -24,4 +24,4 @@ enum OpCode : uint8_t {
     End          = 0x11,
 };
 
-}
+} // namespace pl
