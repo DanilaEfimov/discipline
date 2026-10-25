@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 #define PL_MODULE_MAGIC 0xABBA2026
 #ifndef PL_VERSION
@@ -10,33 +10,28 @@
 
 namespace pl {
 
-enum class SectionName {
-    Header,
-    Data
+enum class SectionName { Header, Data };
+
+template <SectionName S> struct SectionHeader {
+  std::size_t length;
 };
 
-template<SectionName S>
-struct SectionHeader {
-    std::size_t length;
+template <> struct SectionHeader<SectionName::Header> {
+  static constexpr uint32_t sign = PL_MODULE_MAGIC;
+  static constexpr uint32_t version = PL_VERSION;
 };
 
-template<>
-struct SectionHeader<SectionName::Header> {
-    static constexpr uint32_t sign = PL_MODULE_MAGIC;
-    static constexpr uint32_t version = PL_VERSION;
-};
+inline constexpr std::size_t module_header_size =
+    sizeof(SectionHeader<SectionName::Header>);
 
-inline constexpr std::size_t module_header_size = sizeof(SectionHeader<SectionName::Header>);
-
-template<SectionName S>
-struct Section {
-    SectionHeader<S> header;
-    std::uint8_t* bytes = nullptr;
+template <SectionName S> struct Section {
+  SectionHeader<S> header;
+  std::uint8_t *bytes = nullptr;
 };
 
 struct Module {
-    Section<SectionName::Header> header;
-    Section<SectionName::Data> data;
+  Section<SectionName::Header> header;
+  Section<SectionName::Data> data;
 };
 
-} // namespace pl 
+} // namespace pl

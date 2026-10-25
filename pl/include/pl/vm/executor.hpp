@@ -1,31 +1,28 @@
 #pragma once
 
-#include "mmu.hpp"
-#include "arithmetic.hpp"
-#include "workspace.hpp"
 #include "../ir/opcode.hpp"
+#include "arithmetic.hpp"
+#include "mmu.hpp"
+#include "workspace.hpp"
 
 namespace pl {
 
 struct Command {
-    OpCode op;
-    value_t dst, a, b;
-    ip_t imm;
+  OpCode op;
+  value_t dst, a, b;
+  ip_t imm;
 };
 
 struct Executor {
 
-    MemoryManager& mmu;
-    Arithmetic& calculator;
-    Workspace& workspace;
+  MemoryManager &mmu;
+  Arithmetic &calculator;
+  Workspace &workspace;
 
-    Executor(MemoryManager& mmu, Arithmetic& calculator, Workspace& workspace)
-        : mmu(mmu), calculator(calculator), workspace(workspace) {}
+  Executor(MemoryManager &mmu, Arithmetic &calculator, Workspace &workspace)
+      : mmu(mmu), calculator(calculator), workspace(workspace) {}
 
-    void run_command(Command& command) {
-
-    }
-
+  void run_command(Command &command) {}
 };
 
 } // namespace pl

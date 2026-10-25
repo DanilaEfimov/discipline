@@ -1,23 +1,20 @@
 #pragma once
 
-#include "workspace.hpp"
-#include "mmu.hpp"
+#include "../ir/opcode.hpp"
 #include "arithmetic.hpp"
 #include "executor.hpp"
-#include "../ir/opcode.hpp"
-
+#include "mmu.hpp"
+#include "workspace.hpp"
 
 namespace pl {
 
-/** 
+/**
  * TODO: finish decoding
  * TODO: finish commands family
-*/
+ */
 
 struct Decoder {
-    static Command next(const Session& session) {
-
-    }
+  static Command next(const Session &session) {}
 };
 
 } // namespace pl
