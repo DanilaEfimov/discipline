@@ -2,6 +2,8 @@
 
 #include "workspace.hpp"
 #include "arithmetic.hpp"
+#include "mmu.hpp"
+#include "excode.hpp"
 #include "../ir/format.hpp"
 #include <vector>
 #include <stdexcept>
@@ -11,12 +13,49 @@ namespace pl {
 
 class Runtime {
     using offset_t = int64_t;
+    using address_t = uint64_t;
 
     Workspace workspace;
     Arithmetic calculator;
+    MemoryManager mmu;
+
+    bool is_value_address_out_of_range(const Session& session, address_t address) noexcept {
+        offset_t offset = address + sizeof(value_t);
+        return this->is_offset_out_of_range(session, offset);
+    }
+
+    bool is_offset_out_of_range(const Session& session, offset_t offset) noexcept {
+        const std::uint64_t& current_ip = session.context.ip;
+        std::uint64_t length = session.module.data.header.length;
+
+        if(offset >= 0) {
+            return (offset >= length - current_ip || current_ip >= length);
+        } 
+        else {
+            const std::uint64_t abs_offset = 
+                static_cast<std::uint64_t>(-(offset + 1)) + 1;
+            return abs_offset > current_ip;
+        }
+
+        return false;
+    }
 
     void shift_ip(std::size_t session_idx, offset_t offset) {
-        // ! this function sucks
+        auto& current_session = this->workspace.get_session(session_idx);
+        std::uint64_t& current_ip = current_session.context.ip;
+        std::uint64_t length = current_session.module.data.header.length;
+        
+        if(this->is_offset_out_of_range(current_session, offset)) {
+            // throw exception
+        }
+
+        if(offset >= 0)
+            current_ip += static_cast<std::uint64_t>(offset);
+        else {
+            const std::uint64_t abs_offset = 
+                static_cast<std::uint64_t>(-(offset + 1) + 1);
+            current_ip -= abs_offset;
+        }
     }
 
 public:
@@ -36,8 +75,30 @@ public:
         this->shift_ip(session_idx, -offset);
     }
 
-    int run() {
-        return 0;
+    void set_field(std::size_t session_idx, address_t address, value_t value) {
+        auto& current_session = this->workspace.get_session(session_idx);
+        auto& current_data = current_session.module.data.bytes;
+
+        if(this->is_value_address_out_of_range(current_session, address)){
+            // throw exception
+        }
+
+        this->mmu.write_literal(value, current_data, address);
+    }
+
+    value_t get_field(std::size_t session_idx, address_t address) {
+        auto& current_session = this->workspace.get_session(session_idx);
+        auto& current_data = current_session.module.data.bytes;
+
+        if(this->is_value_address_out_of_range(current_session, address)){
+            // throw exception
+        }
+
+        return this->mmu.read_literal(current_data, address);
+    }
+
+    ExCode run() {
+        return ExCode::Success;
     };
 
 };

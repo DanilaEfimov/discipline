@@ -1,5 +1,6 @@
 #pragma  once
 
+#include "excode.hpp"
 #include "runtime.hpp"
 
 
@@ -11,7 +12,7 @@ class VM {
 public:
     VM(Runtime rt) : runtime(std::move(rt)) {}
 
-    int run() {
+    ExCode run() {
         return this->runtime.run();
     }
     

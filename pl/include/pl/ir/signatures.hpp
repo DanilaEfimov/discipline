@@ -6,6 +6,8 @@
 
 namespace pl {
 
+using value_t = uint32_t;
+
 enum class ValueCategory { Literal, Variable };
 
 struct OpSignature {

@@ -5,6 +5,7 @@
 namespace pl {
 
 enum OpCode : uint8_t {
+    End          = 0x00,
     AddLiteral   = 0x01,
     AddVar       = 0x02,
     MulLiteral   = 0x03,
@@ -21,7 +22,6 @@ enum OpCode : uint8_t {
     Read         = 0x0E,
     JumpLiteral  = 0x0F,
     JumpVar      = 0x10,
-    End          = 0x11,
 };
 
 } // namespace pl
