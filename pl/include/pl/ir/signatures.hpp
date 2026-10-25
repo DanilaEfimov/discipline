@@ -30,6 +30,14 @@ inline constexpr OpSignature op_signature(OpCode op) {
     return {2, {VC::Literal, VC::Literal}};
   case OpCode::DivVar:
     return {2, {VC::Literal, VC::Variable}};
+  case OpCode::EqualLiteral:
+    return {2, {VC::Variable, VC::Literal}};
+  case OpCode::EqualVar:
+    return {2, {VC::Variable, VC::Variable}};
+  case OpCode::LessLiteral:
+    return {2, {VC::Variable, VC::Literal}};
+  case OpCode::LessVar:
+    return {2, {VC::Variable, VC::Variable}};
   case OpCode::LeftLiteral:
     return {1, {VC::Literal}};
   case OpCode::LeftVar:

@@ -22,4 +22,6 @@ PL_EXCEPTION(PlSegmentFault);
 
 PL_EXCEPTION(PlRuntimeError);
 
+PL_EXCEPTION(PlDivisionByZero);
+
 } // namespace pl
