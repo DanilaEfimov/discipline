@@ -13,7 +13,7 @@ struct MemoryManager {
 
     static value_t read_literal(const std::uint8_t* bytes, std::size_t field) {
         value_t v;
-        memcpy(&v, bytes, sizeof(value_t));
+        memcpy(&v, bytes + field, sizeof(value_t));
         return v;
     }
 

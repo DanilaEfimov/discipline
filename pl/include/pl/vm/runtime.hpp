@@ -6,7 +6,10 @@
 #include "excode.hpp"
 #include "../ir/format.hpp"
 #include "exceptions.hpp"
+#include "decoder.hpp"
+#include "executor.hpp"
 #include <vector>
+#include <ostream>
 
 
 namespace pl {
@@ -18,6 +21,11 @@ class Runtime {
     Workspace workspace;
     Arithmetic calculator;
     MemoryManager mmu;
+    Executor executor;
+
+    Command select_first_command() {
+        // ! this function sucks
+    }
 
     bool is_value_address_out_of_range(const Session& session, address_t address) noexcept {
         offset_t offset = address + sizeof(value_t);
@@ -58,8 +66,8 @@ class Runtime {
     }
 
 public:
-    Runtime(std::vector<Module> modules)
-        : workspace(modules) {}
+    Runtime(std::vector<Module> modules, std::ostream& out)
+        : workspace(modules, out), executor(mmu, calculator, workspace) {}
         
     void set_ip(std::size_t session_idx, ip_t new_ip) noexcept {
         auto& current_context = this->workspace.get_context(session_idx);
@@ -95,6 +103,13 @@ public:
     }
 
     ExCode run() {
+        Command current = this->select_first_command();
+
+        while(current.op != OpCode::End) {
+            this->executor.run_command(current);
+            current = Decoder::next(this->workspace.get_current_session());
+        }
+        
         return ExCode::Success;
     };
 

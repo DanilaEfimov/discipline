@@ -2,6 +2,7 @@
 
 #include "../ir/format.hpp"
 #include <vector>
+#include <ostream>
 
 namespace pl {
 
@@ -23,10 +24,11 @@ struct Session {
 class Workspace {
     std::vector<Session> sessions;
     std::size_t current_session = 0;
+    std::ostream& out;
 
 public:
-    Workspace(std::vector<Module> modules)
-        : sessions(modules.begin(), modules.end()) {}
+    Workspace(std::vector<Module> modules, std::ostream& out)
+        : sessions(modules.begin(), modules.end()), out(out) {}
 
     const std::size_t sessions_count() const {
         return this->sessions.size();
@@ -70,6 +72,10 @@ public:
 
     void switch_session(std::size_t idx) {
         this->current_session = idx;
+    }
+
+    std::ostream& get_output_stream() {
+        return this->out;
     }
 
 };
