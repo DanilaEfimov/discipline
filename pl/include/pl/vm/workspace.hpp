@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../ir/format.hpp"
-#include <ostream>
 #include <istream>
+#include <ostream>
 #include <vector>
 
 namespace pl {

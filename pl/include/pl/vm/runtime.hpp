@@ -8,11 +8,11 @@
 #include "executor.hpp"
 #include "mmu.hpp"
 #include "workspace.hpp"
-#include <ostream>
-#include <vector>
-#include <string>
 #include <cstring>
-
+#include <istream>
+#include <ostream>
+#include <string>
+#include <vector>
 
 namespace pl {
 
@@ -26,8 +26,8 @@ class Runtime {
   }
 
 public:
-  Runtime(std::vector<Module> modules, std::ostream &out)
-      : workspace(modules, out), executor(workspace) {}
+  Runtime(std::vector<Module> modules, std::ostream &out, std::istream &in)
+      : workspace(modules, out, in), executor(workspace) {}
 
   ExCode run() {
     Command current = this->select_first_command();

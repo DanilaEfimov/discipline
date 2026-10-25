@@ -12,8 +12,8 @@ struct MemoryManager {
     memcpy(bytes + field, &value, sizeof(value_t));
   }
 
-  static void write_literals(std::uint8_t* source, std::uint8_t* bytes,
-                            std::size_t field, std::size_t n) {
+  static void write_literals(std::uint8_t *source, std::uint8_t *bytes,
+                             std::size_t field, std::size_t n) {
     memcpy(bytes + field, source, n);
   }
 

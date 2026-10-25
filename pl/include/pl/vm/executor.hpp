@@ -2,11 +2,10 @@
 
 #include "../ir/opcode.hpp"
 #include "arithmetic.hpp"
+#include "exceptions.hpp"
 #include "mmu.hpp"
 #include "workspace.hpp"
-#include "exceptions.hpp"
 #include <string>
-
 
 namespace pl {
 
@@ -26,8 +25,7 @@ struct Executor {
   Arithmetic calculator;
   Workspace &workspace;
 
-  Executor(Workspace &workspace)
-      : mmu(), calculator(), workspace(workspace) {}
+  Executor(Workspace &workspace) : mmu(), calculator(), workspace(workspace) {}
 
   bool is_value_address_out_of_range(const Session &session,
                                      address_t address) noexcept {
@@ -97,16 +95,14 @@ struct Executor {
     return this->mmu.read_literal(current_data, address);
   }
 
-  void output(char c) {
-    this->workspace.get_output_stream() << c;
-  }
+  void output(char c) { this->workspace.get_output_stream() << c; }
 
   void switch_session(std::size_t session_idx) {
     this->workspace.switch_session(session_idx);
   }
   void run_command(Command &command) {
-    auto& current_session = this->workspace.get_current_session();
-    auto* bytes = current_session.module.data.bytes;
+    auto &current_session = this->workspace.get_current_session();
+    auto *bytes = current_session.module.data.bytes;
 
     switch (command.op) {
     case OpCode::End:
@@ -115,113 +111,103 @@ struct Executor {
       value_t left = this->mmu.read_literal(bytes, command.dst);
       value_t right = command.a;
       value_t result = this->calculator.add_literals(left, right);
-      this->mmu.write_literal(result, current_session.module.data.bytes, command.dst);
-    }
-      break;
+      this->mmu.write_literal(result, current_session.module.data.bytes,
+                              command.dst);
+    } break;
     case OpCode::AddVar: {
       value_t left = this->mmu.read_literal(bytes, command.dst);
       value_t right = this->mmu.read_literal(bytes, command.a);
       value_t result = this->calculator.add_literals(left, right);
-      this->mmu.write_literal(result, current_session.module.data.bytes, command.dst);
-    }
-      break;
+      this->mmu.write_literal(result, current_session.module.data.bytes,
+                              command.dst);
+    } break;
     case OpCode::MulLiteral: {
       value_t left = this->mmu.read_literal(bytes, command.dst);
       value_t right = command.a;
       value_t result = this->calculator.mul_literals(left, right);
-      this->mmu.write_literal(result, current_session.module.data.bytes, command.dst);      
-    }
-      break;
+      this->mmu.write_literal(result, current_session.module.data.bytes,
+                              command.dst);
+    } break;
     case OpCode::MulVar: {
       value_t left = this->mmu.read_literal(bytes, command.dst);
       value_t right = this->mmu.read_literal(bytes, command.a);
       value_t result = this->calculator.mul_literals(left, right);
-      this->mmu.write_literal(result, current_session.module.data.bytes, command.dst);
-    }
-      break;
+      this->mmu.write_literal(result, current_session.module.data.bytes,
+                              command.dst);
+    } break;
     case OpCode::DivLiteral: {
       value_t left = this->mmu.read_literal(bytes, command.dst);
       value_t right = command.a;
       value_t result = this->calculator.div_literals(left, right);
-      this->mmu.write_literal(result, current_session.module.data.bytes, command.dst);
-    }
-      break;
+      this->mmu.write_literal(result, current_session.module.data.bytes,
+                              command.dst);
+    } break;
     case OpCode::DivVar: {
       value_t left = this->mmu.read_literal(bytes, command.dst);
       value_t right = this->mmu.read_literal(bytes, command.a);
       value_t result = this->calculator.div_literals(left, right);
-      this->mmu.write_literal(result, current_session.module.data.bytes, command.dst);
-    }
-      break;
+      this->mmu.write_literal(result, current_session.module.data.bytes,
+                              command.dst);
+    } break;
     case OpCode::RightLiteral: {
       value_t shift = command.a;
-      this->shirt_ip_right(shift);    
-    }
-      break;
+      this->shirt_ip_right(shift);
+    } break;
     case OpCode::RightVar: {
       value_t shift = this->mmu.read_literal(bytes, command.dst);
       this->shirt_ip_right(shift);
-    }
-      break;
+    } break;
     case OpCode::LeftLiteral: {
       value_t shift = command.a;
-      this->shift_ip_left(shift); 
-    }
-      break;
+      this->shift_ip_left(shift);
+    } break;
     case OpCode::LeftVar: {
       value_t shift = this->mmu.read_literal(bytes, command.dst);
       this->shift_ip_left(shift);
-    }
-      break;
+    } break;
     case OpCode::WriteLiteral: {
       value_t dest = command.dst;
       value_t value = command.a;
       this->mmu.write_literal(value, bytes, dest);
-    }
-      break;
+    } break;
     case OpCode::WriteVar: {
       value_t dest = this->mmu.read_literal(bytes, command.a);
       value_t value = command.a;
       this->mmu.write_literal(value, bytes, dest);
-    }
-      break;
+    } break;
     case OpCode::Print: {
       value_t value = this->mmu.read_literal(bytes, command.dst);
       char c = static_cast<char>(value & 0xFF);
       this->output(c);
-    }
-      break;
+    } break;
     case OpCode::Read: {
       value_t dest = command.dst;
 
       std::string line;
       std::getline(this->workspace.get_input_stream(), line);
 
-      std::size_t length = current_session.module.data.header.length; 
-      if(line.size() > length - dest) 
+      std::size_t length = current_session.module.data.header.length;
+      if (line.size() > length - dest)
         throw PlRuntimeError("the input is too large to fit in memory");
 
-      this->mmu.write_literals(reinterpret_cast<std::uint8_t*>(line.data()), bytes, dest, line.size());
-    }
-      break;
+      this->mmu.write_literals(reinterpret_cast<std::uint8_t *>(line.data()),
+                               bytes, dest, line.size());
+    } break;
     case OpCode::JumpLiteral: {
       value_t dest = command.dst;
       this->set_ip(dest);
-    }
-      break;
+    } break;
     case OpCode::JumpVar: {
       value_t dest = this->mmu.read_literal(command.a);
       this->set_ip(dest);
+    } break;
+    default: {
+      std::string error = "no such command named: " +
+                          std::to_string(static_cast<std::size_t>(command.op));
+      throw PlUndefinedCommand(error);
     }
-      break;
-      default: {
-        std::string error = "no such command named: " 
-          + std::to_string(static_cast<std::size_t>(command.op));
-        throw PlUndefinedCommand(error);
-      }
     }
   }
-
 };
 
 } // namespace pl
