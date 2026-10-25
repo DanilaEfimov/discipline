@@ -10,6 +10,9 @@
 #include "workspace.hpp"
 #include <ostream>
 #include <vector>
+#include <string>
+#include <cstring>
+
 
 namespace pl {
 
@@ -23,7 +26,7 @@ class Runtime {
   Executor executor;
 
   Command select_first_command() {
-    // ! this function sucks
+    return Decoder::next(this->workspace.get_current_session());
   }
 
   bool is_value_address_out_of_range(const Session &session,
@@ -96,6 +99,18 @@ public:
       throw PlSegmentFault("value address is out of range");
 
     return this->mmu.read_literal(current_data, address);
+  }
+
+  void output(char c) {
+    this->workspace.get_output_stream() << c;
+  }
+
+  void output(const std::string& str) {
+    this->workspace.get_output_stream() << str;
+  }
+
+  void switch_session(std::size_t session_idx) {
+    this->workspace.switch_session(session_idx);
   }
 
   ExCode run() {

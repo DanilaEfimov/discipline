@@ -7,6 +7,8 @@
 
 namespace pl {
 
+using command_t = value_t;
+
 struct Command {
   OpCode op;
   value_t dst, a, b;
