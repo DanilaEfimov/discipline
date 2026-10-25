@@ -1,18 +1,11 @@
 #pragma once
 
-#include "../ir/format.hpp"
-#include "arithmetic.hpp"
 #include "decoder.hpp"
-#include "exceptions.hpp"
 #include "excode.hpp"
 #include "executor.hpp"
-#include "mmu.hpp"
 #include "workspace.hpp"
-#include <cstring>
 #include <istream>
 #include <ostream>
-#include <string>
-#include <vector>
 
 namespace pl {
 
