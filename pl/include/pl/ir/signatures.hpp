@@ -58,6 +58,10 @@ inline constexpr OpSignature op_signature(OpCode op) {
     return {1, {VC::Literal}};
   case OpCode::JumpVar:
     return {1, {VC::Variable}};
+  case OpCode::SwitchLiteral:
+    return {1, {VC::Literal}};
+  case OpCode::SwitchVar:
+    return {1, {VC::Variable}};
   case OpCode::End:
     return {0, {}};
   }

@@ -26,6 +26,8 @@ enum OpCode : uint8_t {
   Read         = 0x12,
   JumpLiteral  = 0x13,
   JumpVar      = 0x14,
+  SwitchLiteral = 0x15,
+  SwitchVar = 0x16,
 };
 
 } // namespace pl

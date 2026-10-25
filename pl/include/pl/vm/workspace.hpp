@@ -1,13 +1,14 @@
 #pragma once
 
 #include "../ir/format.hpp"
+#include "executor.hpp"
 #include <istream>
 #include <ostream>
 #include <vector>
 
 namespace pl {
 
-using ip_t = std::size_t;
+using ip_t = value_t;
 
 struct SessionContext {
   ip_t ip; // instruction pointer

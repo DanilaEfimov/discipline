@@ -11,6 +11,7 @@
 namespace pl {
 
 using command_t = value_t;
+using ip_t = value_t;
 using offset_t = int64_t;
 using address_t = uint64_t;
 
@@ -19,6 +20,10 @@ struct Command {
   value_t dst, a, b;
   ip_t imm;
 };
+
+// ! compiler makes a padding length of 16 bytes for decoder conveyor (see decoder.hpp)
+// ! 16 bytes of OpCode End to forcfully interrupt a programm
+inline constexpr std::size_t command_non_required_slots_size = 3*sizeof(value_t) + sizeof(ip_t);
 
 struct Executor {
 
@@ -52,7 +57,7 @@ struct Executor {
 
   void shift_ip(offset_t offset) {
     auto &current_session = this->workspace.get_current_session();
-    std::uint64_t &current_ip = current_session.context.ip;
+    ip_t &current_ip = current_session.context.ip;
     std::uint64_t length = current_session.module.data.header.length;
 
     if (this->is_offset_out_of_range(current_session, offset))
@@ -101,6 +106,8 @@ struct Executor {
   void switch_session(std::size_t session_idx) {
     this->workspace.switch_session(session_idx);
   }
+
+  // * command system
   void run_command(Command &command) {
     auto &current_session = this->workspace.get_current_session();
     auto *bytes = current_session.module.data.bytes;
@@ -219,12 +226,19 @@ struct Executor {
                                bytes, dest, line.size());
     } break;
     case OpCode::JumpLiteral: {
-      value_t dest = command.dst;
+      value_t dest = command.imm;
       this->set_ip(dest);
     } break;
     case OpCode::JumpVar: {
-      value_t dest = this->mmu.read_literal(command.a);
+      value_t dest = this->mmu.read_literal(bytes, command.dst);
       this->set_ip(dest);
+    } break;
+    case OpCode::SwitchLiteral: {
+      this->workspace.switch_session(command.a);
+    } break;
+    case OpCode::SwitchVar: {
+      value_t session_idx = this->mmu.read_literal(bytes, command.dst);
+      this->workspace.switch_session(session_idx);
     } break;
     default: {
       std::string error = "no such command named: " +
