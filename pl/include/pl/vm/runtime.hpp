@@ -5,8 +5,8 @@
 #include "mmu.hpp"
 #include "excode.hpp"
 #include "../ir/format.hpp"
+#include "exceptions.hpp"
 #include <vector>
-#include <stdexcept>
 
 
 namespace pl {
@@ -40,14 +40,13 @@ class Runtime {
         return false;
     }
 
-    void shift_ip(std::size_t session_idx, offset_t offset) {
-        auto& current_session = this->workspace.get_session(session_idx);
+    void shift_ip(offset_t offset) {
+        auto& current_session = this->workspace.get_current_session();
         std::uint64_t& current_ip = current_session.context.ip;
         std::uint64_t length = current_session.module.data.header.length;
         
-        if(this->is_offset_out_of_range(current_session, offset)) {
-            // throw exception
-        }
+        if(this->is_offset_out_of_range(current_session, offset)) 
+            throw PlSegmentFault("instruction pointer is out of range");
 
         if(offset >= 0)
             current_ip += static_cast<std::uint64_t>(offset);
@@ -67,32 +66,30 @@ public:
         current_context.ip = new_ip;
     }
 
-    void shirt_ip_right(std::size_t session_idx, offset_t offset) {
-        this->shift_ip(session_idx, offset);
+    void shirt_ip_right(offset_t offset) {
+        this->shift_ip(offset);
     }
 
-    void shift_ip_left(std::size_t session_idx, offset_t offset) {
-        this->shift_ip(session_idx, -offset);
+    void shift_ip_left(offset_t offset) {
+        this->shift_ip(-offset);
     }
 
-    void set_field(std::size_t session_idx, address_t address, value_t value) {
-        auto& current_session = this->workspace.get_session(session_idx);
+    void set_field(address_t address, value_t value) {
+        auto& current_session = this->workspace.get_current_session();
         auto& current_data = current_session.module.data.bytes;
 
-        if(this->is_value_address_out_of_range(current_session, address)){
-            // throw exception
-        }
+        if(this->is_value_address_out_of_range(current_session, address)) 
+            throw PlSegmentFault("value address is out of range");
 
         this->mmu.write_literal(value, current_data, address);
     }
 
-    value_t get_field(std::size_t session_idx, address_t address) {
-        auto& current_session = this->workspace.get_session(session_idx);
+    value_t get_field(address_t address) {
+        auto& current_session = this->workspace.get_current_session();
         auto& current_data = current_session.module.data.bytes;
 
-        if(this->is_value_address_out_of_range(current_session, address)){
-            // throw exception
-        }
+        if(this->is_value_address_out_of_range(current_session, address))
+            throw PlSegmentFault("value address is out of range");
 
         return this->mmu.read_literal(current_data, address);
     }

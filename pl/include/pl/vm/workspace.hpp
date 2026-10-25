@@ -22,12 +22,13 @@ struct Session {
 
 class Workspace {
     std::vector<Session> sessions;
+    std::size_t current_session = 0;
 
 public:
     Workspace(std::vector<Module> modules)
         : sessions(modules.begin(), modules.end()) {}
 
-    const std::size_t modules_count() const {
+    const std::size_t sessions_count() const {
         return this->sessions.size();
     }
 
@@ -53,6 +54,22 @@ public:
 
     SessionContext& get_context(std::size_t idx) {
         return this->sessions.at(idx).context;
+    }
+
+    const Session& get_current_session() const {
+        return this->get_session(this->current_session);
+    }
+
+    Session& get_current_session() {
+        return this->get_session(this->current_session);
+    }
+
+    std::size_t get_current_session_index() const {
+        return this->current_session;
+    }
+
+    void switch_session(std::size_t idx) {
+        this->current_session = idx;
     }
 
 };
