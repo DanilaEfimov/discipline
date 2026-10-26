@@ -17,12 +17,13 @@ inline constexpr std::size_t dest_offset = sizeof(OpCode) + opcode_offset;
 inline constexpr std::size_t imm_offset = dest_offset;
 inline constexpr std::size_t a_offset = sizeof(value_t) + dest_offset;
 inline constexpr std::size_t b_offset = sizeof(value_t) + a_offset;
+inline constexpr std::size_t command_size = b_offset + sizeof(value_t);
 
 
 struct Decoder {
 
   static constexpr bool is_jump(OpCode op) noexcept {
-    return op == OpCode::JumpLiteral || op == OpCode::JumpVar;
+    return op == OpCode::JumpLiteral || op == OpCode::JumpVar || op == OpCode::JumpIf;
   }
 
   static Command next(const Session &session) {

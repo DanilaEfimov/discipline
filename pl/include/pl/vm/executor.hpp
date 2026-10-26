@@ -11,7 +11,6 @@
 namespace pl {
 
 using command_t = value_t;
-using ip_t = value_t;
 using offset_t = int64_t;
 using address_t = uint64_t;
 
@@ -219,11 +218,11 @@ struct Executor {
       std::getline(this->workspace.get_input_stream(), line);
 
       std::size_t length = current_session.module.data.header.length;
-      if (line.size() > length - dest)
+      if (line.size() + 1 > length - dest)
         throw PlRuntimeError("the input is too large to fit in memory");
 
       this->mmu.write_literals(reinterpret_cast<std::uint8_t *>(line.data()),
-                               bytes, dest, line.size());
+                               bytes, dest, line.size() + 1);
     } break;
     case OpCode::JumpLiteral: {
       value_t dest = command.imm;
@@ -239,6 +238,13 @@ struct Executor {
     case OpCode::SwitchVar: {
       value_t session_idx = this->mmu.read_literal(bytes, command.dst);
       this->workspace.switch_session(session_idx);
+    } break;
+    case OpCode::JumpIf: {
+      value_t check = this->mmu.read_literal(bytes, command.a);
+      if(check) {
+        value_t dest = this->mmu.read_literal(bytes, command.imm);
+        this->set_ip(dest);
+      }
     } break;
     default: {
       std::string error = "no such command named: " +
