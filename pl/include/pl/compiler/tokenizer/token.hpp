@@ -24,11 +24,9 @@ enum class TokenCategory {
   Literal,    // hex | decimal
 };
 
-using linen_t = std::uint32_t;
-using offset_t = std::uint32_t;
+using offset_t = std::uint64_t;
 
 struct LocalPosition {
-  linen_t line;
   offset_t offset;
 };
 
@@ -39,7 +37,7 @@ struct GlobalPosition {
   fileid_t file_id;
 };
 
-using tokensize = std::uint8_t;
+using tokensize = std::uint16_t;
 
 struct Token {
   GlobalPosition position;

@@ -15,13 +15,17 @@ class TokenizerContext {
 class Tokenizer {
   std::istream &source;
   TokenizerContext context;
-  linen_t pos = 0;
+  offset_t pos = 0;
   fileid_t file;
 
   void skip_whitespace() {
-    while(std::isspace(static_cast<unsigned char>(this->source.peek()))) {
+    int c = this->source.peek();
+    while(std::isspace(static_cast<unsigned char>(c)) 
+        && c != std::char_traits<char>::eof()
+        && c != '\n') {
       this->source.get();
       this->pos++;
+      c = this->source.peek();
     }
   }
 
@@ -31,102 +35,93 @@ public:
   Token next() {
     this->skip_whitespace();
 
-    int ch;
-    if ((ch = this->source.get()) == std::char_traits<char>::eof())
-      return Token{GlobalPosition{this->pos, this->file}, TokenCategory::Eof, 0};
+    std::streampos start_pos = this->source.tellg();
+    if (start_pos == std::streampos(-1))
+        return Token{GlobalPosition{{this->pos}, this->file}, TokenCategory::Eof, 0};
 
-    this->pos = source.tellg();
+    offset_t start = static_cast<offset_t>(start_pos);
 
-    char current = source.get();
-    Token token;
+    int ch = this->source.peek();
+    if (ch == std::char_traits<char>::eof())
+        return Token{GlobalPosition{{start}, this->file}, TokenCategory::Eof, 0};
+
+    char current = static_cast<char>(ch);
     TokenCategory category = TokenCategory::Unknown;
     tokensize length = 0;
-    tokensize offset;
 
-    switch(current) {
-      case ReservedSymbols::sym_zero: // * number literal
-      {
-        char count_sys = this->source.get();
-        switch(count_sys) {
-          case 'd': // * decimal number
-            offset = TokenRecognizer::try_literal_dec(this->source);
-            if(offset == TokenRecognizer::no_match)
-              break;
-            length = offset;
-          break;
-          case 'x': // * heximal number
-            offset = TokenRecognizer::try_literal_hex(this->source);
-            if(offset == TokenRecognizer::no_match)
-              break;
-            length = offset;
-          break;
-          case 'b': // * binary number
-            offset = TokenRecognizer::try_literal_bin(this->source);
-            if(offset == TokenRecognizer::no_match)
-              break;
-            length = offset;
-          break;
-          default:
-            category = TokenCategory::Unknown;
-            length = 0;
+    switch (current) {
+        case ReservedSymbols::sym_zero: {
+            this->source.get();
+            int prefix = this->source.peek();
+            if (prefix == 'd' || prefix == 'x' || prefix == 'b') {
+                this->source.get();
+                tokensize digits = 0;
+                if (prefix == 'd')      digits = TokenRecognizer::try_literal_dec(this->source);
+                else if (prefix == 'x') digits = TokenRecognizer::try_literal_hex(this->source);
+                else                    digits = TokenRecognizer::try_literal_bin(this->source);
+
+                if (digits != TokenRecognizer::no_match) {
+                    category = TokenCategory::Literal;
+                    length = static_cast<tokensize>(2 + digits); // '0' + prefix + digits
+                } else {
+                    category = TokenCategory::Unknown;
+                    length = 2;
+                }
+            } else {
+                category = TokenCategory::Unknown;
+                length = 1;
+            }
+            break;
         }
-      }
-      break;
-      
-      case ReservedSymbols::sym_directive: // * preprocessor directive
-        offset = TokenRecognizer::try_directive(this->source);
-        break;  // '$'
-      case ReservedSymbols::sym_comma:
-        offset = TokenRecognizer::try_comma(this->source);
-        break;  // ','
-      case ReservedSymbols::sym_column:     
-        offset = TokenRecognizer::try_column(this->source);
-        break;  // ':'
-      case ReservedSymbols::sym_period:     
-        offset = TokenRecognizer::try_period(this->source);
-        break;  // '.'
-      case ReservedSymbols::sym_semicolumn: 
-        offset = TokenRecognizer::try_semicolumn(this->source);
-        break;  // ';'
-      case ReservedSymbols::sym_lbracket:   
-        offset = TokenRecognizer::try_lbracket(this->source);
-        break;  // '('
-      case ReservedSymbols::sym_rbracket:   
-        offset = TokenRecognizer::try_rbracket(this->source);
-        break;  // ')'
-      case ReservedSymbols::sym_lfbracket:  
-        offset = TokenRecognizer::try_lfbracket(this->source);
-        break;  // '{'
-      case ReservedSymbols::sym_rfbracket:  
-        offset = TokenRecognizer::try_rfbracket(this->source);
-        break;  // '}'
-      case ReservedSymbols::sym_lsbracket:  
-        offset = TokenRecognizer::try_lsbracket(this->source);
-        break;  // '['
-      case ReservedSymbols::sym_rsbracket:  
-        offset = TokenRecognizer::try_rsbracket(this->source);
-        break;  // ']'
 
-      default:
-        if(TokenRecognizer::is_ident_char(current)) {
-          std::string word;
-          TokenRecognizer::try_identifier(this->source, word);
+        case '\n':
+            this->source.get(); category = TokenCategory::Eol; length = 1; break;
 
-          int kw_index = is_keyword(word);
-          category = (kw_index == not_a_keyword) 
-            ? TokenCategory::Identifier 
-            : TokenCategory::Keyword;
+        case ReservedSymbols::sym_directive:
+            this->source.get(); category = TokenCategory::Directive; length = 1; break;
+        case ReservedSymbols::sym_comma:
+            this->source.get(); category = TokenCategory::Comma; length = 1; break;
+        case ReservedSymbols::sym_column:
+            this->source.get(); category = TokenCategory::Column; length = 1; break;
+        case ReservedSymbols::sym_period:
+            this->source.get(); category = TokenCategory::Period; length = 1; break;
+        case ReservedSymbols::sym_semicolumn:
+            this->source.get(); category = TokenCategory::Semicolumn; length = 1; break;
+        case ReservedSymbols::sym_lbracket:
+            this->source.get(); category = TokenCategory::lBracket; length = 1; break;
+        case ReservedSymbols::sym_rbracket:
+            this->source.get(); category = TokenCategory::rBracket; length = 1; break;
+        case ReservedSymbols::sym_lfbracket:
+            this->source.get(); category = TokenCategory::lfBracket; length = 1; break;
+        case ReservedSymbols::sym_rfbracket:
+            this->source.get(); category = TokenCategory::rfBracket; length = 1; break;
+        case ReservedSymbols::sym_lsbracket:
+            this->source.get(); category = TokenCategory::lsBracket; length = 1; break;
+        case ReservedSymbols::sym_rsbracket:
+            this->source.get(); category = TokenCategory::rsBracket; length = 1; break;
 
-          this->pos += word.size();
-          length = word.size();
-        }
-      break;
+        default:
+            if (TokenRecognizer::is_ident_char(current)) {
+                std::string word;
+                TokenRecognizer::try_identifier(this->source, word);
+                int kw = is_keyword(word);
+                category = (kw == not_a_keyword)
+                    ? TokenCategory::Identifier
+                    : TokenCategory::Keyword;
+                length = static_cast<tokensize>(word.size());
+            } else {
+                this->source.get();
+                category = TokenCategory::Unknown;
+                length = 1;
+            }
+            break;
     }
 
-    token = Token{GlobalPosition{this->pos, this->file}, category, length};
+    this->pos = static_cast<offset_t>(this->source.tellg());
 
-    return token;
+    return Token{GlobalPosition{{start}, this->file}, category, length};
   }
+
 };
 
 } // namespace plc

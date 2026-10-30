@@ -24,20 +24,21 @@ struct ReservedSymbols {
 class TokenRecognizer {
 
 private:
-  template <typename F>
-  static tokensize try_literal_of(std::istream &in, F &&checker) {
-		tokensize length = 0;
-		int ch = in.peek();
-    if (!checker(ch))
-      return TokenRecognizer::no_match;
 
-    while (checker(ch)) {
-			in.get();
-			length++;
-		}
-		
-		return length;
-	}
+template <typename F>
+static tokensize try_literal_of(std::istream &in, F &&checker) {
+    tokensize length = 0;
+    while (true) {
+        int ch = in.peek();
+        if (ch == std::char_traits<char>::eof())
+            break;
+        if (!checker(static_cast<char>(ch)))
+            break;
+        in.get();
+        length++;
+    }
+    return length == 0 ? TokenRecognizer::no_match : length;
+}
 
 public:
 	static constexpr tokensize no_match = 0;
@@ -45,8 +46,8 @@ public:
   static constexpr bool is_digit_dec(char c) { return c >= '0' && c <= '9'; }
 
 	static constexpr bool is_digit_hex(char c) {
-    return TokenRecognizer::is_digit_dec(c) || (c >= 'a' && c <= 'f');
-	}
+    return TokenRecognizer::is_digit_dec(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+  }
 
   static constexpr bool is_digit_bin(char c) { return c == '0' || c == '1'; }
 

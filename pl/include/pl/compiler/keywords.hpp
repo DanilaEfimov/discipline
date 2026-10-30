@@ -29,11 +29,11 @@ KEYWORD kw_skip = "skip";
 KEYWORD kw_back = "back";
 KEYWORD kw_end = "end";
 
-inline const std::array<KEYWORD_TYPE, 15> keywords = {
+inline const auto keywords = std::to_array<KEYWORD_TYPE>({
     kw_add, kw_mul, kw_div, kw_eq, kw_lt, kw_write,
     kw_read, kw_print, kw_jmp, kw_jmz, kw_switch, kw_skip,
     kw_back, kw_end,
-};  // keywords
+}); // keywords
 
 inline constexpr int not_a_keyword = -1;
 
