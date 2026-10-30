@@ -14,4 +14,4 @@
 #define PLVM_VERSION_STRING "0.1.0"
 #define PLVM_BUILD_INFO PLVM_COMPILER
 
-inline const char* plvm_build_date() { return __DATE__; } 
+inline const char *plvm_build_date() { return __DATE__; }

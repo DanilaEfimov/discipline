@@ -7,7 +7,6 @@
 #include <istream>
 #include <ostream>
 
-
 namespace pl {
 
 class Runtime {
@@ -22,8 +21,8 @@ class Runtime {
 public:
   Runtime(std::vector<Module> modules, std::ostream &out, std::istream &in)
       : workspace(modules, out, in), executor(workspace) {}
-  Runtime(const Runtime&) = delete;
-  Runtime& operator=(const Runtime&) = delete;
+  Runtime(const Runtime &) = delete;
+  Runtime &operator=(const Runtime &) = delete;
 
   ExCode run() {
     Command current = this->select_first_command();

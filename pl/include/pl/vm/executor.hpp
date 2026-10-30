@@ -7,7 +7,6 @@
 #include "workspace.hpp"
 #include <string>
 
-
 namespace pl {
 
 using command_t = value_t;
@@ -20,9 +19,10 @@ struct Command {
   ip_t imm;
 };
 
-// ! compiler makes a padding length of 16 bytes for decoder conveyor (see decoder.hpp)
-// ! 13 bytes of OpCode End to forcfully interrupt a programm
-inline constexpr std::size_t command_non_required_slots_size = 3*sizeof(value_t) + sizeof(ip_t);
+// ! compiler makes a padding length of 16 bytes for decoder conveyor (see
+// decoder.hpp) ! 13 bytes of OpCode End to forcfully interrupt a programm
+inline constexpr std::size_t command_non_required_slots_size =
+    3 * sizeof(value_t) + sizeof(ip_t);
 
 struct Executor {
 
@@ -118,43 +118,37 @@ struct Executor {
       value_t left = this->mmu.read_literal(bytes, command.dst);
       value_t right = command.a;
       value_t result = this->calculator.add_literals(left, right);
-      this->mmu.write_literal(result, bytes,
-                              command.dst);
+      this->mmu.write_literal(result, bytes, command.dst);
     } break;
     case OpCode::AddVar: {
       value_t left = this->mmu.read_literal(bytes, command.dst);
       value_t right = this->mmu.read_literal(bytes, command.a);
       value_t result = this->calculator.add_literals(left, right);
-      this->mmu.write_literal(result, bytes,
-                              command.dst);
+      this->mmu.write_literal(result, bytes, command.dst);
     } break;
     case OpCode::MulLiteral: {
       value_t left = this->mmu.read_literal(bytes, command.dst);
       value_t right = command.a;
       value_t result = this->calculator.mul_literals(left, right);
-      this->mmu.write_literal(result, bytes,
-                              command.dst);
+      this->mmu.write_literal(result, bytes, command.dst);
     } break;
     case OpCode::MulVar: {
       value_t left = this->mmu.read_literal(bytes, command.dst);
       value_t right = this->mmu.read_literal(bytes, command.a);
       value_t result = this->calculator.mul_literals(left, right);
-      this->mmu.write_literal(result, bytes,
-                              command.dst);
+      this->mmu.write_literal(result, bytes, command.dst);
     } break;
     case OpCode::DivLiteral: {
       value_t left = this->mmu.read_literal(bytes, command.dst);
       value_t right = command.a;
       value_t result = this->calculator.div_literals(left, right);
-      this->mmu.write_literal(result, bytes,
-                              command.dst);
+      this->mmu.write_literal(result, bytes, command.dst);
     } break;
     case OpCode::DivVar: {
       value_t left = this->mmu.read_literal(bytes, command.dst);
       value_t right = this->mmu.read_literal(bytes, command.a);
       value_t result = this->calculator.div_literals(left, right);
-      this->mmu.write_literal(result, bytes,
-                              command.dst);
+      this->mmu.write_literal(result, bytes, command.dst);
     } break;
     case OpCode::EqualLiteral: {
       value_t left = this->mmu.read_literal(bytes, command.dst);
@@ -241,7 +235,7 @@ struct Executor {
     } break;
     case OpCode::JumpIf: {
       value_t check = this->mmu.read_literal(bytes, command.a);
-      if(check) {
+      if (check) {
         value_t dest = this->mmu.read_literal(bytes, command.imm);
         this->set_ip(dest);
       }

@@ -1,15 +1,14 @@
 #pragma once
 
-#include "tokenizer/token.hpp"
-#include <string>
 #include <array>
+#include <string>
 
-#define KEYWORD_TYPE const char*
+#define KEYWORD_TYPE const char *
 #define KEYWORD inline constexpr KEYWORD_TYPE
 
 namespace plc {
 
-// arithmetic vvv   
+// arithmetic vvv
 KEYWORD kw_add = "add";
 KEYWORD kw_mul = "mul";
 KEYWORD kw_div = "div";
@@ -30,17 +29,29 @@ KEYWORD kw_back = "back";
 KEYWORD kw_end = "end";
 
 inline const auto keywords = std::to_array<KEYWORD_TYPE>({
-    kw_add, kw_mul, kw_div, kw_eq, kw_lt, kw_write,
-    kw_read, kw_print, kw_jmp, kw_jmz, kw_switch, kw_skip,
-    kw_back, kw_end,
+    kw_add,
+    kw_mul,
+    kw_div,
+    kw_eq,
+    kw_lt,
+    kw_write,
+    kw_read,
+    kw_print,
+    kw_jmp,
+    kw_jmz,
+    kw_switch,
+    kw_skip,
+    kw_back,
+    kw_end,
 }); // keywords
 
 inline constexpr int not_a_keyword = -1;
 
-inline int is_keyword(const std::string& word) {
-    for(std::size_t i = 0; i < keywords.size(); ++i)
-        if(word == keywords[i]) return i;
-    return not_a_keyword;
+inline int is_keyword(const std::string &word) {
+  for (std::size_t i = 0; i < keywords.size(); ++i)
+    if (word == keywords[i])
+      return i;
+  return not_a_keyword;
 }
 
 } // namespace plc

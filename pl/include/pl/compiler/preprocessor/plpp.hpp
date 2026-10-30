@@ -1,11 +1,7 @@
 #pragma once
 
-namespace plc {
+namespace plpp {
 
-class PlPP {
+class Plpp {};
 
-
-
-};
-
-} //namespace plc
+} // namespace plpp

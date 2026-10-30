@@ -19,8 +19,8 @@ class VM {
   Runtime runtime;
 
 public:
-  VM(std::vector<Module> modules, std::ostream& out, std::istream& in) 
-    : runtime(std::move(modules), out, in) {}
+  VM(std::vector<Module> modules, std::ostream &out, std::istream &in)
+      : runtime(std::move(modules), out, in) {}
 
   RunResult run() {
     std::string error_string;

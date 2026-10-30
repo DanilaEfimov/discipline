@@ -16,8 +16,9 @@ struct Arithmetic {
   }
 
   static value_t div_literals(value_t left, value_t right) {
-    if(right == 0) {
-      std::string error = std::string("division by zero by address: ") + std::to_string(left);
+    if (right == 0) {
+      std::string error =
+          std::string("division by zero by address: ") + std::to_string(left);
       throw PlDivisionByZero(error);
     }
     return left / right;
@@ -30,7 +31,6 @@ struct Arithmetic {
   static value_t le_literals(value_t left, value_t right) noexcept {
     return left < right;
   }
-
 };
 
 } // namespace pl
