@@ -21,7 +21,7 @@ struct Command {
 };
 
 // ! compiler makes a padding length of 16 bytes for decoder conveyor (see decoder.hpp)
-// ! 16 bytes of OpCode End to forcfully interrupt a programm
+// ! 13 bytes of OpCode End to forcfully interrupt a programm
 inline constexpr std::size_t command_non_required_slots_size = 3*sizeof(value_t) + sizeof(ip_t);
 
 struct Executor {
@@ -202,9 +202,9 @@ struct Executor {
       this->mmu.write_literal(value, bytes, dest);
     } break;
     case OpCode::WriteVar: {
-      value_t dest = this->mmu.read_literal(bytes, command.a);
-      value_t value = command.a;
-      this->mmu.write_literal(value, bytes, dest);
+      value_t addr = this->mmu.read_literal(bytes, command.dst);
+      value_t value = this->mmu.read_literal(bytes, command.a);
+      this->set_field(addr, value);
     } break;
     case OpCode::Print: {
       value_t value = this->mmu.read_literal(bytes, command.dst);
