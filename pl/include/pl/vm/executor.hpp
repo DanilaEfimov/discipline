@@ -2,6 +2,7 @@
 
 #include "../ir/opcode.hpp"
 #include "../compiler/assembler/abi.hpp"
+#include "../compiler/assembler/assembler.hpp"
 #include "arithmetic.hpp"
 #include "exceptions.hpp"
 #include "mmu.hpp"
@@ -11,6 +12,9 @@
 namespace pl {
 
 using address_t = plabi::address_t;
+using offset_t = plabi::offset_t;
+using ip_t = plabi::ip_t;
+using Command = plabi::Command;
 
 struct Executor {
 
