@@ -9,20 +9,7 @@
 
 namespace pl {
 
-using command_t = value_t;
-using offset_t = int64_t;
-using address_t = uint64_t;
 
-struct Command {
-  OpCode op;
-  value_t dst, a, b;
-  ip_t imm;
-};
-
-// ! compiler makes a padding length of 16 bytes for decoder conveyor (see
-// decoder.hpp) ! 13 bytes of OpCode End to forcfully interrupt a programm
-inline constexpr std::size_t command_non_required_slots_size =
-    3 * sizeof(value_t) + sizeof(ip_t);
 
 struct Executor {
 

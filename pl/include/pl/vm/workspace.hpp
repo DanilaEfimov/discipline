@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../compiler/assembler/abi.hpp"
 #include "../ir/format.hpp"
 #include "executor.hpp"
 #include <istream>
@@ -8,10 +9,8 @@
 
 namespace pl {
 
-using ip_t = value_t;
-
 struct SessionContext {
-  ip_t ip; // instruction pointer
+  plabi::ip_t ip; // instruction pointer
 };
 
 struct Session {

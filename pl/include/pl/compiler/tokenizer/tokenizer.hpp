@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../keywords.hpp"
-#include "helper.hpp"
+#include "../helper.hpp"
 #include "token.hpp"
 #include <cstdint>
 #include <istream>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "token.hpp"
+#include "./tokenizer/token.hpp"
 #include <istream>
 #include <optional>
 
