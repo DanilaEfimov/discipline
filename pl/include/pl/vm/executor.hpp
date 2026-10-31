@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ir/opcode.hpp"
+#include "../compiler/assembler/abi.hpp"
 #include "arithmetic.hpp"
 #include "exceptions.hpp"
 #include "mmu.hpp"
@@ -9,7 +10,7 @@
 
 namespace pl {
 
-
+using address_t = plabi::address_t;
 
 struct Executor {
 
