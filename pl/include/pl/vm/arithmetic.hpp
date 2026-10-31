@@ -1,10 +1,12 @@
 #pragma once
 
-#include "../ir/signatures.hpp"
+#include "../compiler/assembler/abi.hpp"
 #include "exceptions.hpp"
 #include <string>
 
 namespace pl {
+
+using value_t = plabi::value_t;
 
 struct Arithmetic {
   static value_t add_literals(value_t left, value_t right) noexcept {
