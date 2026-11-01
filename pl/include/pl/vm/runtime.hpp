@@ -29,7 +29,7 @@ public:
 
     while (current.op != OpCode::End) {
       this->executor.run_command(current);
-      this->executor.shirt_ip_right(command_size);
+      this->executor.shirt_ip_right(Decoder::is_jump(current.op) ? 0 : command_size);
       current = Decoder::next(this->workspace.get_current_session());
     }
 

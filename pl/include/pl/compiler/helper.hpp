@@ -26,7 +26,7 @@ class TokenRecognizer {
 
 private:
   template <typename F>
-  static tokensize try_literal_of(std::istream &in, F &&checker) {
+  static tokensize try_literal_of(std::istream &in, F &&checker, std::string& word) {
     tokensize length = 0;
     while (true) {
       int ch = in.peek();
@@ -34,6 +34,7 @@ private:
         break;
       if (!checker(static_cast<char>(ch)))
         break;
+      word.push_back(static_cast<char>(ch));
       in.get();
       length++;
     }
@@ -57,20 +58,20 @@ public:
     return c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
   }
 
-  static tokensize try_identifier(std::istream &in) {
-    int ch = in.peek();
-    if (ch == std::char_traits<char>::eof() ||
-        TokenRecognizer::is_digit_dec(ch))
-      return TokenRecognizer::no_match;
+  // static tokensize try_identifier(std::istream &in) {
+  //   int ch = in.peek();
+  //   if (ch == std::char_traits<char>::eof() ||
+  //       TokenRecognizer::is_digit_dec(ch))
+  //     return TokenRecognizer::no_match;
 
-    tokensize length = 1;
-    while (is_ident_char(in.peek()) || is_digit_dec(in.peek())) {
-      in.get();
-      length++;
-    }
+  //   tokensize length = 1;
+  //   while (is_ident_char(in.peek()) || is_digit_dec(in.peek())) {
+  //     in.get();
+  //     length++;
+  //   }
 
-    return length;
-  }
+  //   return length;
+  // }
 
   static bool try_identifier(std::istream &in, std::string &out) {
     int ch = in.peek();
@@ -91,16 +92,16 @@ public:
     return !out.empty();
   }
 
-  static tokensize try_literal_hex(std::istream &in) {
-    return try_literal_of(in, TokenRecognizer::is_digit_hex);
+  static tokensize try_literal_hex(std::istream &in, std::string& word) {
+    return try_literal_of(in, TokenRecognizer::is_digit_hex, word);
   }
 
-  static tokensize try_literal_bin(std::istream &in) {
-    return try_literal_of(in, TokenRecognizer::is_digit_bin);
+  static tokensize try_literal_bin(std::istream &in, std::string& word) {
+    return try_literal_of(in, TokenRecognizer::is_digit_bin, word);
   }
 
-  static tokensize try_literal_dec(std::istream &in) {
-    return try_literal_of(in, TokenRecognizer::is_digit_dec);
+  static tokensize try_literal_dec(std::istream &in, std::string& word) {
+    return try_literal_of(in, TokenRecognizer::is_digit_dec, word);
   }
 
   static tokensize try_directive(std::istream &in) {

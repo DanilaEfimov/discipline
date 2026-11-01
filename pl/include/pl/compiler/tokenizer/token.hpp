@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 namespace plc {
 
@@ -40,9 +41,9 @@ struct GlobalPosition {
 using tokensize = std::uint16_t;
 
 struct Token {
+  std::string lexeme;  // only for literals, keywrods and identifiers
   GlobalPosition position;
   TokenCategory category;
-  tokensize length;
 };
 
 } // namespace plc

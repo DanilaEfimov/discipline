@@ -1,6 +1,7 @@
 #pragma once
 
 #include "abi.hpp"
+#include "../parser/ast.hpp"
 #include <ostream>
 
 namespace pla {
@@ -11,8 +12,8 @@ class PlAssembler {
 public:
     PlAssembler(std::ostream& out) : out(out) {}
 
-    void write(plabi::Command operation) {
-        this->out.write(reinterpret_cast<const char*>(&operation), plabi::command_size);
+    void write(plp::Statement statement) {
+        // TODO: implement
     }
 };
 

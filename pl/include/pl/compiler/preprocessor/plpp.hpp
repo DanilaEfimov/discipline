@@ -17,19 +17,14 @@ class Plpp {
     std::istream& source;
     PlppContext context;
 
-    void update_position() {
-        if(this->context.last == plc::ReservedSymbols::sym_oel) {
-            this->context.pos.local.line++;
-            this->context.pos.local.column = 1;
-        }
-    }
+    void update_position() {}
 
     void skip_whitespace() {
         char ch = this->source.peek();
         
         while(is_space(this->context.last) && is_space(ch) 
             || this->context.is_waiting_for_newline) {
-            this->context.pos.local.column++;
+            this->context.pos.local.offset++;
             this->context.last = ch;
             ch = this->source.get();
             this->context.is_waiting_for_newline = 
@@ -57,6 +52,12 @@ public:
 
         return ch;
     }
+
+    std::streampos tellg() {
+        return this->source.tellg();
+    }
+
+    operator std::istream&() { return this->source; }
 
     plc::GlobalPosition get_current_position() { return this->context.pos; }
 };
