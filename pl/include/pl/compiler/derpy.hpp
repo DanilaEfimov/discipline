@@ -5,14 +5,14 @@
 namespace plc {
 
 class PlCompiler {
-    plc::Processing& processing;
+  plc::Processing &processing;
 
 public:
-    PlCompiler(Processing& p): processing(p) {}
+  PlCompiler(Processing &p) : processing(p) {}
 
-    const std::vector<plc::Diagnostic>& compile() {
-        return this->processing.run();
-    }
+  const std::vector<plc::Diagnostic> &compile() {
+    return this->processing.run();
+  }
 };
 
 } // namespace plc

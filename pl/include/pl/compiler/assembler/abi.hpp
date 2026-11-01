@@ -22,10 +22,11 @@ struct Command {
 
 // ! compiler makes a padding length of 16 bytes for decoder conveyor (see
 // ! decoder.hpp) ! 13 bytes of OpCode End to forcfully interrupt a programm
-inline constexpr std::size_t command_non_required_slots_size = 3 * sizeof(value_t);
+inline constexpr std::size_t command_non_required_slots_size =
+    3 * sizeof(value_t);
 
 inline constexpr std::size_t command_size = 13;
 
 // static_assert(command_size == 13, "ABI missmatch: command length is not 13");
 
-} // plabi
+} // namespace plabi

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../keywords.hpp"
 #include "../helper.hpp"
-#include "token.hpp"
+#include "../keywords.hpp"
 #include "../preprocessor/plpp.hpp"
+#include "token.hpp"
 #include <cstdint>
 #include <istream>
 
@@ -25,7 +25,11 @@ public:
     int ch = this->source.peek();
     offset_t start_pos = this->source.get_current_position().local.offset;
     if (this->source.tellg() == std::streampos(-1))
-      return Token{"", GlobalPosition{{this->source.get_current_position().local.offset}, this->file}, TokenCategory::Eof};
+      return Token{
+          "",
+          GlobalPosition{{this->source.get_current_position().local.offset},
+                         this->file},
+          TokenCategory::Eof};
 
     offset_t start = static_cast<offset_t>(start_pos);
 

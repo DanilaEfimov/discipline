@@ -26,7 +26,8 @@ class TokenRecognizer {
 
 private:
   template <typename F>
-  static tokensize try_literal_of(std::istream &in, F &&checker, std::string& word) {
+  static tokensize try_literal_of(std::istream &in, F &&checker,
+                                  std::string &word) {
     tokensize length = 0;
     while (true) {
       int ch = in.peek();
@@ -92,15 +93,15 @@ public:
     return !out.empty();
   }
 
-  static tokensize try_literal_hex(std::istream &in, std::string& word) {
+  static tokensize try_literal_hex(std::istream &in, std::string &word) {
     return try_literal_of(in, TokenRecognizer::is_digit_hex, word);
   }
 
-  static tokensize try_literal_bin(std::istream &in, std::string& word) {
+  static tokensize try_literal_bin(std::istream &in, std::string &word) {
     return try_literal_of(in, TokenRecognizer::is_digit_bin, word);
   }
 
-  static tokensize try_literal_dec(std::istream &in, std::string& word) {
+  static tokensize try_literal_dec(std::istream &in, std::string &word) {
     return try_literal_of(in, TokenRecognizer::is_digit_dec, word);
   }
 

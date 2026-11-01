@@ -1,9 +1,8 @@
 #pragma once
 
 #include "../compiler/assembler/abi.hpp"
-#include "../ir/opcode.hpp"
-#include "../compiler/assembler/abi.hpp"
 #include "../compiler/assembler/assembler.hpp"
+#include "../ir/opcode.hpp"
 #include "arithmetic.hpp"
 #include "exceptions.hpp"
 #include "mmu.hpp"
@@ -231,8 +230,7 @@ struct Executor {
       if (check) {
         value_t dest = this->mmu.read_literal(bytes, command.imm);
         this->set_ip(dest);
-      }
-      else {
+      } else {
         this->shirt_ip_right(plabi::command_size);
       }
     } break;
