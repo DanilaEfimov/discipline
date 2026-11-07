@@ -54,8 +54,8 @@ std::size_t offset = 0;
       }
 
       if(ch == plc::ReservedSymbols::sym_semicolumn) {
-        while(ch != plc::ReservedSymbols::sym_eol && this->raw_peek() != EOF)
-          ch = this->raw_get();
+        while(this->raw_peek() != plc::ReservedSymbols::sym_eol && this->raw_peek() != EOF)
+          this->raw_get();
         continue;
       }
 

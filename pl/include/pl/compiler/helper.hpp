@@ -8,6 +8,7 @@ namespace plc {
 
 struct ReservedSymbols {
   static constexpr char sym_zero = '0';
+  static constexpr char sym_space = ' ';
   static constexpr char sym_directive = '$';
   static constexpr char sym_comma = ',';
   static constexpr char sym_column = ':';
