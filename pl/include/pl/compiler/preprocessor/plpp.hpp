@@ -48,11 +48,6 @@ std::size_t offset = 0;
       int ch = this->raw_peek();
       if(ch == EOF) return;
 
-      if(is_space(ch)) {
-        ch = this->raw_get();
-        continue;
-      }
-
       if(ch == plc::ReservedSymbols::sym_semicolumn) {
         while(ch != plc::ReservedSymbols::sym_eol && this->raw_peek() != EOF)
           ch = this->raw_get();

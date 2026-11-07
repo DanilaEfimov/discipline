@@ -8,6 +8,7 @@ namespace plc {
 enum class TokenCategory {
   Eof,     // enf of file
   Eol,     // end of line
+  Space,   // ' '
   Unknown, // unknown token
   Identifier,
   Keyword,    // see keywords.hpp
