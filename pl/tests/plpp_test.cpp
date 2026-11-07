@@ -51,31 +51,52 @@ static void test_get_sequence() {
   CHECK(p.eof());
 }
 
-static void test_skips_whitespace() {
-  CHECK(drain("  a \t b\r c  ") == "abc");
-  CHECK(drain("   \t\t  ") == "");
+// Whitespace is now significant: it comes through verbatim.
+static void test_whitespace_is_preserved() {
+  CHECK(drain("  a \t b\r c  ") == "  a \t b\r c  ");
+  CHECK(drain("   \t\t  ") == "   \t\t  ");
 }
 
 static void test_newline_is_not_ignored() {
   CHECK(drain("a\nb") == "a\nb");
+  CHECK(drain("\n\n\n") == "\n\n\n");
 }
 
+// Comments are stripped; the terminating '\n' is preserved.
 static void test_skips_comments() {
   CHECK(drain("; only a comment") == "");
-  CHECK(drain("a ; comment\nb") == "ab");
-  CHECK(drain("; first\n; second\nx") == "x");
+  CHECK(drain("a ; comment\nb") == "a \nb");   // пробел перед ';' сохранён
+  CHECK(drain("; first\n; second\nx") == "\nx"); // '\n' после каждого комментария
 }
 
 static void test_comment_at_eof_without_newline() {
-  CHECK(drain("a ;tail") == "a");
+  CHECK(drain("a ;tail") == "a ");
 }
 
-static void test_leading_ignored_before_peek() {
-  std::istringstream in("  ; c\n  z");
+static void test_leading_comment_before_peek() {
+  std::istringstream in("; c\n  z");
   plpp::Plpp p(in);
-  CHECK(p.peek() == 'z');
+  // После комментария первый значимый символ — '\n' (не 'z'!).
+  CHECK(p.peek() == '\n');
+  CHECK(p.get() == '\n');
+  // Теперь пробелы — значимые, peek вернёт первый пробел, а не 'z'.
+  CHECK(p.peek() == ' ');
+  CHECK(p.get() == ' ');
+  CHECK(p.get() == ' ');
   CHECK(p.get() == 'z');
   CHECK(p.eof());
+}
+
+// Пробелы внутри комментария не важны, но пробел ПЕРЕД ';' значим.
+static void test_space_before_comment_is_kept() {
+  CHECK(drain("a ; c\nb") == "a \nb");
+  CHECK(drain("a; c\nb") == "a\nb");
+}
+
+// ';' в начале строки: комментарий съедает строку, '\n' остаётся.
+static void test_comment_only_line() {
+  CHECK(drain(";\n") == "\n");
+  CHECK(drain("a\n;\nb") == "a\n\nb");
 }
 
 static void test_offset() {
@@ -88,6 +109,30 @@ static void test_offset() {
   CHECK(p.current_offset() == 2);
   p.get();  // EOF must not advance
   CHECK(p.current_offset() == 2);
+}
+
+// offset двигается за каждый прочитанный байт, включая пробелы и комментарии.
+static void test_offset_with_whitespace_and_comments() {
+  std::istringstream in(" a;c\nb");
+  plpp::Plpp p(in);
+
+  CHECK(p.current_offset() == 0);
+
+  CHECK(p.get() == ' ');              // 1 байт
+  CHECK(p.current_offset() == 1);
+
+  CHECK(p.get() == 'a');              // ещё 1
+  CHECK(p.current_offset() == 2);
+
+  // дальше ';' и 'c' скипнуты как комментарий, '\n' — значимый
+  CHECK(p.get() == '\n');
+  CHECK(p.current_offset() == 5);     // ' ', 'a', ';', 'c', '\n'
+
+  CHECK(p.get() == 'b');
+  CHECK(p.current_offset() == 6);
+
+  CHECK(p.get() == EOF);
+  CHECK(p.current_offset() == 6);
 }
 
 static void test_position_tracking() {
@@ -111,17 +156,39 @@ static void test_position_tracking() {
   CHECK(pos.line == 2 && pos.column == 2);
 }
 
+// Позиция первого значимого символа после комментария.
+static void test_position_after_comment() {
+  std::istringstream in("ab;xx\ncd");
+  plpp::Plpp p(in);
+
+  CHECK(p.get() == 'a');   // 1:1
+  CHECK(p.get() == 'b');   // 1:2
+
+  // ';xx' скипнуто, следующий значимый — '\n' на 1:6
+  auto pos = p.current_position();
+  CHECK(pos.line == 1 && pos.column == 6);
+  CHECK(p.get() == '\n');
+
+  pos = p.current_position();
+  CHECK(pos.line == 2 && pos.column == 1);
+  CHECK(p.get() == 'c');
+}
+
 int main() {
   test_empty_input();
   test_peek_does_not_consume();
   test_get_sequence();
-  test_skips_whitespace();
+  test_whitespace_is_preserved();
   test_newline_is_not_ignored();
   test_skips_comments();
   test_comment_at_eof_without_newline();
-  test_leading_ignored_before_peek();
+  test_leading_comment_before_peek();
+  test_space_before_comment_is_kept();
+  test_comment_only_line();
   test_offset();
+  test_offset_with_whitespace_and_comments();
   test_position_tracking();
+  test_position_after_comment();
 
   if (failures) {
     std::cerr << failures << " check(s) failed\n";
