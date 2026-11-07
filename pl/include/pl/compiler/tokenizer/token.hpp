@@ -28,7 +28,8 @@ enum class TokenCategory {
 using offset_t = std::uint64_t;
 
 struct LocalPosition {
-  offset_t offset;
+  std::size_t line;
+  std::size_t column;
 };
 
 using fileid_t = std::uint16_t;

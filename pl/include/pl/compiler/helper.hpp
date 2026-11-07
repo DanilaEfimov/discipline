@@ -19,7 +19,7 @@ struct ReservedSymbols {
   static constexpr char sym_rfbracket = '}';
   static constexpr char sym_lsbracket = '[';
   static constexpr char sym_rsbracket = ']';
-  static constexpr char sym_oel = '\n';
+  static constexpr char sym_eol = '\n';
 };
 
 class TokenRecognizer {
