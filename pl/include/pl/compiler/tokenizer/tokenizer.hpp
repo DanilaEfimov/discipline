@@ -128,8 +128,8 @@ public:
     case ReservedSymbols::sym_zero: 
       // start of a number literal
       {
-        ch = this->source.get();
-        LiteralPrefix prefix = resolve_prefix(static_cast<char>(ch));
+        int next_ch = this->source.peek();
+        LiteralPrefix prefix = resolve_prefix(static_cast<char>(next_ch));
 
         bool (*predicate)(char);
         switch(prefix) {
@@ -145,6 +145,8 @@ public:
             current_position,
             TokenCategory::Unknown
           };
+
+        this->source.get();
 
         std::string digits = "";
         int p;

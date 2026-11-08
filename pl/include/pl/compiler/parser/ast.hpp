@@ -1,49 +1,51 @@
 #pragma once
 
-#include "../assembler/abi.hpp"
-#include "../diagnostics/diagnostic.hpp"
-#include "../keywords.hpp"
+#include "../../ir/opcode.hpp"
+#include "../../ir/signatures.hpp"
+#include <string>
+#include <optional>
 #include <variant>
 #include <vector>
 
 namespace plp {
 
-enum class ExpressionType {
-  Identifier, // identifier
-  Literal,    // literal
-  Address,    // '[' literal ']'
+enum class StatementType {
+    Declaration,
+    Operation,
+    None,
 };
-
-struct Expression {
-  plc::GlobalPosition span;
-  ExpressionType type;
-  std::string identifier;
-  plabi::value_t value;
-};
-
-struct Operation {
-  plc::GlobalPosition span;
-  plc::keyword_id_t keyword_id;
-  std::optional<Expression> arg1;
-  std::optional<Expression> arg2;
-};
-
-inline constexpr std::size_t max_operation_length =
-    7; // keyword [expression [expression]]
 
 struct Declaration {
-  plc::GlobalPosition span;
-  std::string identigier;
-  std::optional<plabi::address_t> address;
+    std::string identifier;
+    std::size_t address;
 };
 
-inline constexpr std::size_t max_declaration_length =
-    3; // '.' identifier [address]
+using arg_t = std::pair<std::size_t, pl::ValueCategory>;
 
-using Statement = std::variant<Declaration, Operation>;
-
-struct Program {
-  std::vector<Statement> statements;
+struct Operation {
+    arg_t arg1;
+    arg_t arg2;
+    pl::OpCode op;
 };
+
+// ! order has to match the StatementType order
+using statement_t = std::variant<Declaration, Operation>;
+using program_t = std::vector<statement_t>;
+
+inline pl::OpSignature get_op_signature(const Operation& operation) {
+    pl::OpSignature sign;
+
+    sign.argc += operation.arg1.second == pl::ValueCategory::None ? 0 : 1;
+    sign.argc += operation.arg2.second == pl::ValueCategory::None ? 0 : 1;
+
+    sign.args[0] = operation.arg1.second;
+    sign.args[0] = operation.arg2.second;
+
+    return sign;
+}
+
+inline bool signature_match(const Operation& operation) {
+    return get_op_signature(operation) == pl::op_signature(operation.op);
+}
 
 } // namespace plp

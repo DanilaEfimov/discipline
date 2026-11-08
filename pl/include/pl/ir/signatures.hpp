@@ -6,7 +6,7 @@
 
 namespace pl {
 
-enum class ValueCategory { Literal, Variable };
+enum class ValueCategory { None, Literal, Variable };
 
 struct OpSignature {
   std::size_t argc;

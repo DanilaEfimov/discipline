@@ -252,15 +252,15 @@ static void test_keyword_lookalikes_are_identifiers() {
 static void test_literals() {
   CHECK_TOKENS("0d123", E(TokenCategory::Literal, "0d123"), END);
   CHECK_TOKENS("0d0", E(TokenCategory::Literal, "0d0"), END);
-  CHECK_TOKENS("0hFF", E(TokenCategory::Literal, "0hFF"), END);
-  CHECK_TOKENS("0hdeadBEEF", E(TokenCategory::Literal, "0hdeadBEEF"), END);
+  CHECK_TOKENS("0xFF", E(TokenCategory::Literal, "0xFF"), END);
+  CHECK_TOKENS("0xdeadBEEF", E(TokenCategory::Literal, "0xdeadBEEF"), END);
   CHECK_TOKENS("0b101", E(TokenCategory::Literal, "0b101"), END);
   CHECK_TOKENS("0b0", E(TokenCategory::Literal, "0b0"), END);
 }
 
 static void test_literal_stops_at_first_foreign_char() {
-  CHECK_TOKENS("0hFg",
-               E(TokenCategory::Literal, "0hF"),
+  CHECK_TOKENS("0xFg",
+               E(TokenCategory::Literal, "0xF"),
                E(TokenCategory::Identifier, "g"), END);
   CHECK_TOKENS("0b102",
                E(TokenCategory::Literal, "0b10"),
@@ -275,20 +275,26 @@ static void test_literals_around_punctuation() {
                E(TokenCategory::Literal, "0b101"),
                E(TokenCategory::Comma, ","),
                E(TokenCategory::Literal, "0d7"), END);
-  CHECK_TOKENS("[0hFF]",
+  CHECK_TOKENS("[0xFF]",
                E(TokenCategory::lsBracket, "["),
-               E(TokenCategory::Literal, "0hFF"),
+               E(TokenCategory::Literal, "0xFF"),
                E(TokenCategory::rsBracket, "]"), END);
 }
 
 // A prefix with no digits after it is not a literal.
 static void test_prefix_without_digits_is_unknown() {
-  CHECK_TOKENS("0h", E(TokenCategory::Unknown), END);
+  CHECK_TOKENS("0x", E(TokenCategory::Unknown), END);
   CHECK_TOKENS("0b", E(TokenCategory::Unknown), END);
   CHECK_TOKENS("0d", E(TokenCategory::Unknown), END);
-  CHECK_TOKENS("0hg",
+  CHECK_TOKENS("0xg",
                E(TokenCategory::Unknown),
                E(TokenCategory::Identifier, "g"), END);
+}
+
+// 'h' is no longer a prefix (hex is 'x'): "0h1" is not a literal.
+static void test_old_hex_prefix_is_not_a_prefix() {
+  auto toks = lex_all("0h1");
+  CHECK(!toks.empty() && toks[0].category == TokenCategory::Unknown);
 }
 
 // A bare '0' is not a literal, and must not swallow the character after it.
@@ -319,12 +325,12 @@ static void test_unknown_does_not_eat_following_token() {
                E(TokenCategory::Keyword, "add"), END);
 }
 
-// DECISION NEEDED: ' ' reaches the tokenizer as a regular character, and
-// TokenCategory::Space exists, so these expect one Space token per ' '.
-// If you'd rather skip spaces in the tokenizer, delete this test and
-// remove Space tokens from the expectations below.
+// Every ' ' is its own Space token (not grouped).
 static void test_space_token() {
   CHECK_TOKENS(" ", E(TokenCategory::Space, " "), END);
+  CHECK_TOKENS("  ",
+               E(TokenCategory::Space),
+               E(TokenCategory::Space), END);
   CHECK_TOKENS("a b",
                E(TokenCategory::Identifier, "a"),
                E(TokenCategory::Space),
@@ -388,8 +394,8 @@ static void test_positions() {
 }
 
 static void test_position_of_multichar_tokens() {
-  CHECK_POSITIONS("0hFF x",
-                  P(1, 1),   // 0hFF
+  CHECK_POSITIONS("0xFF x",
+                  P(1, 1),   // 0xFF
                   P(1, 5),   // ' '
                   P(1, 6),   // x
                   P(1, 7));  // EOF
@@ -410,7 +416,7 @@ static void test_position_over_blank_lines() {
 }
 
 static void test_file_id_is_propagated() {
-  for (const auto& t : lex_all("add x\n0hF", 7))
+  for (const auto& t : lex_all("add x\n0xF", 7))
     CHECK(t.position.file_id == 7);
 }
 
@@ -426,6 +432,7 @@ int main() {
   RUN(test_literal_stops_at_first_foreign_char);
   RUN(test_literals_around_punctuation);
   RUN(test_prefix_without_digits_is_unknown);
+  RUN(test_old_hex_prefix_is_not_a_prefix);
   RUN(test_bare_zero_does_not_swallow_next_char);
   RUN(test_unknown_chars);
   RUN(test_high_byte_is_not_eof);
