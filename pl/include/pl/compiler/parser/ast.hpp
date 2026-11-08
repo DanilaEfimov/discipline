@@ -28,7 +28,7 @@ struct Operation {
     pl::OpCode op;
 };
 
-// ! order has to match the StatementType order
+// ! order has to match the StatementType members order
 using statement_t = std::variant<Declaration, Operation>;
 using program_t = std::vector<statement_t>;
 

@@ -12,9 +12,9 @@ class PlAssembler {
 public:
   PlAssembler(std::ostream &out) : out(out) {}
 
-  void write(plp::Statement statement) {
-    // TODO: implement
-  }
+  // void write(plp::Statement statement) {
+  //   // TODO: implement
+  // }
 };
 
 } // namespace pla

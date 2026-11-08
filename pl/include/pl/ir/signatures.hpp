@@ -13,6 +13,10 @@ struct OpSignature {
   std::array<ValueCategory, 2> args;
 };
 
+inline bool operator==(const pl::OpSignature& left, const pl::OpSignature& right) {
+  return left.args[0] == right.args[0] && left.args[1] == right.args[1] && left.argc == right.argc;
+}
+
 inline constexpr OpSignature op_signature(OpCode op) {
   using VC = ValueCategory;
   switch (op) {
