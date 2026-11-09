@@ -8,30 +8,45 @@
 #include <type_traits>
 
 static int failures = 0;
-static const char* current_test = "";
+static const char *current_test = "";
 
 // ---------------------------------------------------------------- repr
 
 // Readable form of one char: 'a', '\n', ' ', '\x07'.
 static std::string char_repr(int ch) {
-  if (ch == EOF) return "EOF";
+  if (ch == EOF)
+    return "EOF";
   std::string s = "'";
   switch (ch) {
-    case '\n': s += "\\n"; break;
-    case '\t': s += "\\t"; break;
-    case '\r': s += "\\r"; break;
-    case '\b': s += "\\b"; break;
-    case '\0': s += "\\0"; break;
-    case '\'': s += "\\'"; break;
-    case '\\': s += "\\\\"; break;
-    default:
-      if (std::isprint(ch)) {
-        s += static_cast<char>(ch);
-      } else {
-        char buf[8];
-        std::snprintf(buf, sizeof buf, "\\x%02X", ch & 0xFF);
-        s += buf;
-      }
+  case '\n':
+    s += "\\n";
+    break;
+  case '\t':
+    s += "\\t";
+    break;
+  case '\r':
+    s += "\\r";
+    break;
+  case '\b':
+    s += "\\b";
+    break;
+  case '\0':
+    s += "\\0";
+    break;
+  case '\'':
+    s += "\\'";
+    break;
+  case '\\':
+    s += "\\\\";
+    break;
+  default:
+    if (std::isprint(ch)) {
+      s += static_cast<char>(ch);
+    } else {
+      char buf[8];
+      std::snprintf(buf, sizeof buf, "\\x%02X", ch & 0xFF);
+      s += buf;
+    }
   }
   s += "'";
   return s;
@@ -39,38 +54,54 @@ static std::string char_repr(int ch) {
 
 // Readable form of a string with escapes; spaces are shown as '·' so that
 // trailing/leading spaces are visible.
-static std::string str_repr(const std::string& text) {
+static std::string str_repr(const std::string &text) {
   std::string s = "\"";
   for (char c : text) {
     switch (c) {
-      case '\n': s += "\\n"; break;
-      case '\t': s += "\\t"; break;
-      case '\r': s += "\\r"; break;
-      case '\b': s += "\\b"; break;
-      case '\0': s += "\\0"; break;
-      case '"':  s += "\\\""; break;
-      case '\\': s += "\\\\"; break;
-      case ' ':  s += "\xC2\xB7"; break;
-      default:
-        if (std::isprint(static_cast<unsigned char>(c))) {
-          s += c;
-        } else {
-          char buf[8];
-          std::snprintf(buf, sizeof buf, "\\x%02X", c & 0xFF);
-          s += buf;
-        }
+    case '\n':
+      s += "\\n";
+      break;
+    case '\t':
+      s += "\\t";
+      break;
+    case '\r':
+      s += "\\r";
+      break;
+    case '\b':
+      s += "\\b";
+      break;
+    case '\0':
+      s += "\\0";
+      break;
+    case '"':
+      s += "\\\"";
+      break;
+    case '\\':
+      s += "\\\\";
+      break;
+    case ' ':
+      s += "\xC2\xB7";
+      break;
+    default:
+      if (std::isprint(static_cast<unsigned char>(c))) {
+        s += c;
+      } else {
+        char buf[8];
+        std::snprintf(buf, sizeof buf, "\\x%02X", c & 0xFF);
+        s += buf;
+      }
     }
   }
   s += "\"";
   return s;
 }
 
-template <class T>
-static std::string repr(const T& v) {
+template <class T> static std::string repr(const T &v) {
   if constexpr (std::is_same_v<T, std::string>) {
     return str_repr(v);
   } else if constexpr (std::is_same_v<T, char> || std::is_same_v<T, int>) {
-    return char_repr(v) + (v == EOF ? "" : " (" + std::to_string(static_cast<int>(v)) + ")");
+    return char_repr(v) +
+           (v == EOF ? "" : " (" + std::to_string(static_cast<int>(v)) + ")");
   } else {
     std::ostringstream os;
     os << std::boolalpha << v;
@@ -80,68 +111,67 @@ static std::string repr(const T& v) {
 
 // ---------------------------------------------------------------- macros
 
-static void report(const char* file, int line, const std::string& what) {
+static void report(const char *file, int line, const std::string &what) {
   ++failures;
   std::cerr << "FAIL [" << current_test << "] " << file << ":" << line << "\n"
             << what << "\n";
 }
 
-#define CHECK(cond)                                                          \
-  do {                                                                       \
-    if (!(cond)) report(__FILE__, __LINE__, std::string("  check failed: ") + #cond); \
+#define CHECK(cond)                                                            \
+  do {                                                                         \
+    if (!(cond))                                                               \
+      report(__FILE__, __LINE__, std::string("  check failed: ") + #cond);     \
   } while (0)
 
 // Compares two values and prints both on failure.
-#define CHECK_EQ(actual, expected)                                           \
-  do {                                                                       \
-    auto a_ = (actual);                                                      \
-    auto b_ = (expected);                                                    \
-    if (!(a_ == b_)) {                                                       \
-      report(__FILE__, __LINE__,                                             \
-             std::string("  expression: ") + #actual +                      \
-             "\n  expected:   " + repr(b_) +                                 \
-             "\n  actual:     " + repr(a_));                                 \
-    }                                                                        \
+#define CHECK_EQ(actual, expected)                                             \
+  do {                                                                         \
+    auto a_ = (actual);                                                        \
+    auto b_ = (expected);                                                      \
+    if (!(a_ == b_)) {                                                         \
+      report(__FILE__, __LINE__,                                               \
+             std::string("  expression: ") + #actual + "\n  expected:   " +    \
+                 repr(b_) + "\n  actual:     " + repr(a_));                    \
+    }                                                                          \
   } while (0)
 
 // Runs the input through Plpp::get() and compares the result string.
-#define CHECK_DRAIN(input, expected)                                         \
-  do {                                                                       \
-    std::string in_ = (input);                                               \
-    std::string want_ = (expected);                                          \
-    std::string got_ = drain(in_);                                           \
-    if (got_ != want_) {                                                     \
-      report(__FILE__, __LINE__,                                             \
-             "  input:      " + str_repr(in_) +                              \
-             "\n  expected:   " + str_repr(want_) +                          \
-             "\n  actual:     " + str_repr(got_));                           \
-    }                                                                        \
+#define CHECK_DRAIN(input, expected)                                           \
+  do {                                                                         \
+    std::string in_ = (input);                                                 \
+    std::string want_ = (expected);                                            \
+    std::string got_ = drain(in_);                                             \
+    if (got_ != want_) {                                                       \
+      report(__FILE__, __LINE__,                                               \
+             "  input:      " + str_repr(in_) + "\n  expected:   " +           \
+                 str_repr(want_) + "\n  actual:     " + str_repr(got_));       \
+    }                                                                          \
   } while (0)
 
 // Checks current_position() as line:column.
-#define CHECK_POS(p, exp_line, exp_col)                                      \
-  do {                                                                       \
-    auto pos_ = (p).current_position();                                      \
-    if (pos_.line != (exp_line) || pos_.column != (exp_col)) {               \
-      report(__FILE__, __LINE__,                                             \
-             "  expected position: " + std::to_string(exp_line) + ":" +     \
-             std::to_string(exp_col) +                                       \
-             "\n  actual position:   " + std::to_string(pos_.line) + ":" +  \
-             std::to_string(pos_.column));                                   \
-    }                                                                        \
+#define CHECK_POS(p, exp_line, exp_col)                                        \
+  do {                                                                         \
+    auto pos_ = (p).current_position();                                        \
+    if (pos_.line != (exp_line) || pos_.column != (exp_col)) {                 \
+      report(__FILE__, __LINE__,                                               \
+             "  expected position: " + std::to_string(exp_line) + ":" +        \
+                 std::to_string(exp_col) +                                     \
+                 "\n  actual position:   " + std::to_string(pos_.line) + ":" + \
+                 std::to_string(pos_.column));                                 \
+    }                                                                          \
   } while (0)
 
-#define RUN(t)                                                               \
-  do {                                                                       \
-    current_test = #t;                                                       \
-    t();                                                                     \
+#define RUN(t)                                                                 \
+  do {                                                                         \
+    current_test = #t;                                                         \
+    t();                                                                       \
   } while (0)
 
 // ---------------------------------------------------------------- helpers
 
 // Reads everything through Plpp::get() and returns it as a string.
 // Capped so that a broken get() (that does not advance) cannot loop forever.
-static std::string drain(const std::string& text) {
+static std::string drain(const std::string &text) {
   std::istringstream in(text);
   plpp::Plpp p(in);
   std::string out;
@@ -215,9 +245,7 @@ static void test_mixed_whitespace() {
 }
 
 // "\r\n" line endings: '\r' disappears, '\n' remains.
-static void test_crlf() {
-  CHECK_DRAIN("a\r\nb", "a\nb");
-}
+static void test_crlf() { CHECK_DRAIN("a\r\nb", "a\nb"); }
 
 static void test_newline_is_not_ignored() {
   CHECK_DRAIN("a\nb", "a\nb");
@@ -250,7 +278,7 @@ static void test_peek_skips_only_ignored_chars() {
 // Comments are stripped; the terminating '\n' is preserved.
 static void test_skips_comments() {
   CHECK_DRAIN("; only a comment", "");
-  CHECK_DRAIN("a ; comment\nb", "a \nb");        // space before ';' is kept
+  CHECK_DRAIN("a ; comment\nb", "a \nb"); // space before ';' is kept
   CHECK_DRAIN("; first\n; second\nx", "\n\nx");
 }
 
@@ -293,7 +321,7 @@ static void test_offset() {
   CHECK_EQ(p.current_offset(), std::size_t{1});
   p.get();
   CHECK_EQ(p.current_offset(), std::size_t{2});
-  p.get();  // EOF must not advance
+  p.get(); // EOF must not advance
   CHECK_EQ(p.current_offset(), std::size_t{2});
 }
 
@@ -326,10 +354,10 @@ static void test_offset_counts_skipped_chars() {
   plpp::Plpp p(in);
 
   CHECK_EQ(p.get(), 'a');
-  CHECK_EQ(p.current_offset(), std::size_t{2});   // '\t', 'a'
+  CHECK_EQ(p.current_offset(), std::size_t{2}); // '\t', 'a'
 
   CHECK_EQ(p.get(), 'b');
-  CHECK_EQ(p.current_offset(), std::size_t{5});   // + '\t', '\r', 'b'
+  CHECK_EQ(p.current_offset(), std::size_t{5}); // + '\t', '\r', 'b'
 }
 
 static void test_position_tracking() {
@@ -338,14 +366,14 @@ static void test_position_tracking() {
 
   CHECK_POS(p, 1u, 1u);
 
-  p.get();  // a
+  p.get(); // a
   CHECK_POS(p, 1u, 2u);
 
-  p.get();  // b
-  p.get();  // \n
+  p.get(); // b
+  p.get(); // \n
   CHECK_POS(p, 2u, 1u);
 
-  p.get();  // c
+  p.get(); // c
   CHECK_POS(p, 2u, 2u);
 }
 
@@ -361,7 +389,7 @@ static void test_position_with_space_and_skipped_chars() {
   CHECK_EQ(p.get(), 'a');
   CHECK_POS(p, 1u, 3u);
 
-  CHECK_EQ(p.get(), 'b');            // '\t' skipped, then 'b'
+  CHECK_EQ(p.get(), 'b'); // '\t' skipped, then 'b'
   CHECK_POS(p, 1u, 5u);
 }
 
@@ -379,8 +407,8 @@ static void test_position_after_comment() {
   std::istringstream in("ab;xx\ncd");
   plpp::Plpp p(in);
 
-  CHECK_EQ(p.get(), 'a');   // 1:1
-  CHECK_EQ(p.get(), 'b');   // 1:2
+  CHECK_EQ(p.get(), 'a'); // 1:1
+  CHECK_EQ(p.get(), 'b'); // 1:2
 
   // peek() skips ';xx'; the next significant char is '\n' at 1:6
   CHECK_EQ(p.peek(), '\n');

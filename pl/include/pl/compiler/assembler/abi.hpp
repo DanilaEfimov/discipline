@@ -27,6 +27,8 @@ inline constexpr std::size_t command_non_required_slots_size =
 
 inline constexpr std::size_t command_size = 13;
 
-// static_assert(command_size == 13, "ABI missmatch: command length is not 13");
+inline constexpr address_t resolve_command_address(std::size_t idx) noexcept {
+  return command_size * idx;
+}
 
 } // namespace plabi
