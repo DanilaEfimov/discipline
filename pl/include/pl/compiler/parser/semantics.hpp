@@ -12,11 +12,11 @@ using namespace pl::bnf;
 struct StatementRecognizer {
 
 static bool declaration_match(const std::vector<plc::Token>& line, plc::Diagnostic& what) {
-    return definition_match(line, Rule{RuleRepo::operation_terms}, what);
+    return BnfTree::definition_match(line, RuleRepo::RuleName::Declaration, what);
 }
 
 static bool operation_match(const std::vector<plc::Token>& line, plc::Diagnostic& what) {
-    return definition_match(line, Rule{RuleRepo::declaration_terms}, what);
+    return BnfTree::definition_match(line, RuleRepo::RuleName::Operation, what);
 }
 
 static StatementType recognize(const std::vector<plc::Token>& line, plc::Diagnostic& what) {
