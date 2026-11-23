@@ -28,7 +28,7 @@ KEYWORD kw_skip = "skip";
 KEYWORD kw_back = "back";
 KEYWORD kw_end = "end";
 
-inline const auto keywords = std::to_array<KEYWORD_TYPE>({
+inline constexpr auto keywords = std::to_array<KEYWORD_TYPE>({
     kw_add,
     kw_mul,
     kw_div,
@@ -49,7 +49,7 @@ inline constexpr int not_a_keyword = -1;
 
 using keyword_id_t = int;
 
-inline keyword_id_t is_keyword(const std::string &word) {
+inline constexpr keyword_id_t is_keyword(const std::string &word) {
   for (std::size_t i = 0; i < keywords.size(); ++i)
     if (word == keywords[i])
       return i;

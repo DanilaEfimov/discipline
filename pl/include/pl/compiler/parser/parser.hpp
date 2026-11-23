@@ -35,9 +35,10 @@ class Parser {
   std::optional<Declaration> parse_declaration() {
     // TODO: implement
     plc::Diagnostic what;
-    bool is_correct_sentence = BnfTree::definition_match(this->line, RuleRepo::RuleName::Declaration, what);
+    bool is_correct_sentence = BnfTree::definition_match(
+        this->line, RuleRepo::RuleName::Declaration, what);
 
-    if(!is_correct_sentence) {
+    if (!is_correct_sentence) {
       this->inspector.note(what);
       return std::nullopt;
     }
@@ -50,9 +51,10 @@ class Parser {
   std::optional<Operation> parse_operation() {
     // TODO: implement
     plc::Diagnostic what;
-    bool is_correct_sentence = BnfTree::definition_match(this->line, RuleRepo::RuleName::Operation, what);
+    bool is_correct_sentence = BnfTree::definition_match(
+        this->line, RuleRepo::RuleName::Operation, what);
 
-    if(!is_correct_sentence) {
+    if (!is_correct_sentence) {
       this->inspector.note(what);
       return std::nullopt;
     }
@@ -73,7 +75,8 @@ class Parser {
   }
 
 public:
-  explicit Parser(plc::Tokenizer &tk, InspectorConfig icfg, SymbolTableConfig tcfg)
+  explicit Parser(plc::Tokenizer &tk, InspectorConfig icfg,
+                  SymbolTableConfig tcfg)
       : tokenizer(tk), inspector(icfg), symbol_table(tcfg) {}
 
   void parse_program() {
