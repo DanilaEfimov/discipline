@@ -49,7 +49,7 @@ inline constexpr int not_a_keyword = -1;
 
 using keyword_id_t = int;
 
-inline constexpr keyword_id_t is_keyword(const std::string &word) {
+inline constexpr keyword_id_t is_keyword(std::string_view word) {
   for (std::size_t i = 0; i < keywords.size(); ++i)
     if (word == keywords[i])
       return i;

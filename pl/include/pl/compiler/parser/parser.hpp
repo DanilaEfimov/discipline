@@ -1,12 +1,15 @@
 #pragma once
 
+#include "../../ir/signatures.hpp"
 #include "../diagnostics/diagnostic.hpp"
-#include "../tokenizer/tokenizer.hpp"
+#include "args.hpp"
 #include "ast.hpp"
 #include "bnf.hpp"
 #include "inspector.hpp"
 #include "semantics.hpp"
+#include "../mnemonic.hpp"
 #include "symbols.hpp"
+#include <span>
 #include <vector>
 
 namespace plp {
@@ -17,8 +20,18 @@ class Parser {
   Inspector inspector;
   program_t program;
 
-  std::vector<plc::Token> line;
+  std::vector<token_t> line;
   bool eof_seen = false;
+
+  pl::OpSignature parse_signature(ArgsLine args) {
+    token_t current;
+    pl::OpSignature res;
+    int i = 0;
+    while (args.next(current), res.argc <= pl::max_arg_count) {
+      res.args[i] = categorize_value(current);
+    }
+    return res;
+  }
 
   void fill_line() {
     this->line.clear();
@@ -49,7 +62,6 @@ class Parser {
   }
 
   std::optional<Operation> parse_operation() {
-    // TODO: implement
     plc::Diagnostic what;
     bool is_correct_sentence = BnfTree::definition_match(
         this->line, RuleRepo::RuleName::Operation, what);
@@ -58,6 +70,11 @@ class Parser {
       this->inspector.note(what);
       return std::nullopt;
     }
+
+    auto sign = parse_signature(
+        ArgsLine(std::span{this->line}.subspan(1, this->line.size())));
+    pl::OpCode opcode = plc::mnemonic_to_opcode(plc::is_keyword(this->line[0].lexeme), sign);
+    //TODO: resolve argument values
   }
 
   std::optional<statement_t> parse_line() {

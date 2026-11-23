@@ -8,15 +8,22 @@ namespace pl {
 
 enum class ValueCategory { None, Literal, Variable };
 
+inline constexpr std::size_t max_arg_count = 2;
+
 struct OpSignature {
   std::size_t argc;
-  std::array<ValueCategory, 2> args;
+  std::array<ValueCategory, max_arg_count> args;
 };
 
 inline bool operator==(const pl::OpSignature &left,
                        const pl::OpSignature &right) {
-  return left.args[0] == right.args[0] && left.args[1] == right.args[1] &&
-         left.argc == right.argc;
+  if (left.argc != right.argc)
+    return false;
+  for (int i = 0; i < left.argc; ++i) {
+    if (left.args[i] != right.args[i])
+      return false;
+  }
+  return true;
 }
 
 inline constexpr OpSignature op_signature(OpCode op) {
